@@ -14,11 +14,7 @@ import { JitsiConferenceErrors } from '@lyno/lib-jitsi-meet/dist/JitsiConference
 import { JitsiConnectionErrors } from '@lyno/lib-jitsi-meet/dist/JitsiConnectionErrors';
 
 export interface JitsiMeetOptions {
-	hosts?: any;
 	logLevel?: JitsiLogLevels;
-	roomName?: string;
-
-	// These can be used to override the friendly configuration options
 	connectionOptions?: typeof InitOptions | any;
 	conferenceOptions?: JitsiConferenceOptions | any;
 }
@@ -78,7 +74,9 @@ export class JitsiMeet implements Disposable {
 
 		// Initialize
 		JitsiMeetJS.init({});
-		JitsiMeetJS.setLogLevel(this.options.logLevel);
+		if (this.options.logLevel) { 
+			JitsiMeetJS.setLogLevel(this.options.logLevel); 
+		}
 	}
 
 	/**

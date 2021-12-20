@@ -7,8 +7,6 @@ import { JitsiConnectionEvents } from '@lyno/lib-jitsi-meet/dist/JitsiConnection
 import { JitsiConferenceEvents } from '@lyno/lib-jitsi-meet/dist/JitsiConferenceEvents';
 
 import { JitsiMeet } from './JitsiMeet';
-import { HotUpdateChunk } from 'webpack';
-import JitsiLocalTrack from '@lyno/lib-jitsi-meet/dist/modules/RTC/JitsiLocalTrack';
 
 function showLocalTracks(jitsiMeet: JitsiMeet) {
 	console.debug("addLocalTracks", "tracks:", jitsiMeet.localTracks);
@@ -102,7 +100,6 @@ function setUpUi() {
 		button.addEventListener("click", () => action());
 		controls.appendChild(button);
 	});
-
 }
 
 function updateConferenceDisplay() {
@@ -111,7 +108,6 @@ function updateConferenceDisplay() {
 		let newConference = (document.querySelector("#conferenceName") as HTMLInputElement).value;
 		jitsiMeet.joinConference(newConference);
 	});
-
 }
 
 let jitsiMeet: JitsiMeet;
@@ -140,7 +136,7 @@ async function main() {
 		// [JitsiConnectionEvents.CONNECTION_ESTABLISHED, () => console.log("Connection established")], // The await would succeed
 		// [JitsiConnectionEvents.CONNECTION_FAILED, () => console.log("Connection failed")], // The await would fail
 	]);
-	
+
 	// Returns the user's id if the connection was successful and throws an error if it was not. 
 	await jitsiMeet.connect(connectionEventListeners);
 
@@ -170,8 +166,7 @@ async function main() {
 			updateConferenceDisplay();
 		}],
 
-		[JitsiConferenceEvents.CONFERENCE_LEFT, () => {updateConferenceDisplay()}],
-
+		[JitsiConferenceEvents.CONFERENCE_LEFT, () => { updateConferenceDisplay() }],
 	]);
 
 	await jitsiMeet.joinConference(roomName, conferenceEventListeners);

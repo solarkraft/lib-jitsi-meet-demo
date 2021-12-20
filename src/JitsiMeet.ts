@@ -77,8 +77,8 @@ export class JitsiMeet implements Disposable {
 
 		// Initialize
 		JitsiMeetJS.init({});
-		if (this.options.logLevel) { 
-			JitsiMeetJS.setLogLevel(this.options.logLevel); 
+		if (this.options.logLevel) {
+			JitsiMeetJS.setLogLevel(this.options.logLevel);
 		}
 	}
 
@@ -190,7 +190,7 @@ export class JitsiMeet implements Disposable {
 	 * @param options CreateLocalTracksOptions
 	 * @returns true
 	 */
-	 public async createLocalTracks(options?: CreateLocalTracksOptions): Promise<void> {
+	public async createLocalTracks(options?: CreateLocalTracksOptions): Promise<void> {
 		let tracksOptions = options || this.options.trackOptions || { devices: ['audio', 'video'] };
 
 		return new Promise<void>(async (resolve, reject) => {

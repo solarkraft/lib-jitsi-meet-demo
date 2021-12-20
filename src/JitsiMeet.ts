@@ -10,6 +10,8 @@ import { Disposable } from '@typed/disposable';
 import { JitsiConferenceEvents } from '@lyno/lib-jitsi-meet/dist/JitsiConferenceEvents';
 import { JitsiConnectionEvents } from '@lyno/lib-jitsi-meet/dist/JitsiConnectionEvents';
 import { JitsiLogLevels } from '@lyno/lib-jitsi-meet/dist/JitsiLogLevels';
+import { JitsiConferenceErrors } from '@lyno/lib-jitsi-meet/dist/JitsiConferenceErrors';
+import { JitsiConnectionErrors } from '@lyno/lib-jitsi-meet/dist/JitsiConnectionErrors';
 
 export interface JitsiMeetOptions {
     hosts?: any;
@@ -96,10 +98,9 @@ export class JitsiMeet implements Disposable {
 			this.connection.addEventListener(JitsiConnectionEvents.CONNECTION_ESTABLISHED, (id) => resolve(id));
 
 			// Errors
-			this.connection.addEventListener(JitsiConnectionEvents.CONNECTION_FAILED, (msg) => reject(new Error("CONNECTION_FAILED" + msg)));
-			this.connection.addEventListener(JitsiConnectionEvents.WRONG_STATE, (msg) => reject(new Error("WRONG_STATE" + msg)));
-			this.connection.addEventListener(JitsiConnectionEvents.DISPLAY_NAME_REQUIRED, (msg) => reject(new Error("DISPLAY_NAME_REQUIRED" + msg)));
-			// TODO: Use JitsiConnectionErrors?
+			this.connection.addEventListener(JitsiConnectionEvents.CONNECTION_FAILED, (e: JitsiConnectionErrors) => reject(new Error(e)));
+			this.connection.addEventListener(JitsiConnectionEvents.WRONG_STATE, (e: JitsiConnectionErrors) => reject(new Error(e)));
+			this.connection.addEventListener(JitsiConnectionEvents.DISPLAY_NAME_REQUIRED, (e: JitsiConnectionErrors) => reject(new Error(e)));
 
 			// Add provided event listeners
 			listeners?.forEach((listener, event) => this.connection.addEventListener(event, listener));
@@ -126,10 +127,8 @@ export class JitsiMeet implements Disposable {
 			this.conference.addEventListener(JitsiConferenceEvents.CONFERENCE_JOINED, () => resolve(null));
 
 			// Errors
-			this.conference.on(JitsiConferenceEvents.CONNECTION_INTERRUPTED, () => reject(JitsiConferenceEvents.CONNECTION_INTERRUPTED));
-			this.conference.on(JitsiConferenceEvents.CONFERENCE_FAILED, () => reject(JitsiConferenceEvents.CONNECTION_INTERRUPTED));
-			this.conference.on(JitsiConferenceEvents.CONNECTION_INTERRUPTED, () => reject(JitsiConferenceEvents.CONNECTION_INTERRUPTED));
-			// TODO: Use JitsiConferenceErrors?
+			this.conference.on(JitsiConferenceEvents.CONNECTION_INTERRUPTED, (e: JitsiConferenceErrors) => reject(new Error(e)));
+			this.conference.on(JitsiConferenceEvents.CONFERENCE_FAILED, (e: JitsiConferenceErrors) => reject(new Error(e)));
 
 			// Add provided event listeners
 			listeners?.forEach((listener, event: JitsiConferenceEvents) => {

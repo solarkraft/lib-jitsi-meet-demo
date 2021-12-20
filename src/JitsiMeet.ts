@@ -1,23 +1,20 @@
-import JitsiMeetJS, { CreateLocalTracksOptions } from '@lyno/lib-jitsi-meet';
-import InitOptions from '@lyno/lib-jitsi-meet';
-import { JitsiConferenceOptions } from '@lyno/lib-jitsi-meet/dist/JitsiConnection';
-import JitsiConnection from '@lyno/lib-jitsi-meet/dist/JitsiConnection';
-import JitsiConference from '@lyno/lib-jitsi-meet/dist/JitsiConference';
-import JitsiTrack from '@lyno/lib-jitsi-meet/dist/modules/RTC/JitsiTrack';
+import JitsiMeetJS from '@lyno/lib-jitsi-meet';
+import { CreateLocalTracksOptions, InitOptions } from "@lyno/lib-jitsi-meet/";
+import { JitsiConferenceEvents } from "@lyno/lib-jitsi-meet/dist/JitsiConferenceEvents";
+import { JitsiConferenceOptions } from "@lyno/lib-jitsi-meet/dist/JitsiConnection";
+import { JitsiLogLevels } from "@lyno/lib-jitsi-meet/dist/JitsiLogLevels";
 import JitsiRemoteTrack from '@lyno/lib-jitsi-meet/dist/modules/RTC/JitsiRemoteTrack';
-
-import { Disposable } from '@typed/disposable';
-import { JitsiConferenceEvents } from '@lyno/lib-jitsi-meet/dist/JitsiConferenceEvents';
-import { JitsiConnectionEvents } from '@lyno/lib-jitsi-meet/dist/JitsiConnectionEvents';
-import { JitsiLogLevels } from '@lyno/lib-jitsi-meet/dist/JitsiLogLevels';
-import { JitsiConferenceErrors } from '@lyno/lib-jitsi-meet/dist/JitsiConferenceErrors';
-import { JitsiConnectionErrors } from '@lyno/lib-jitsi-meet/dist/JitsiConnectionErrors';
 import JitsiLocalTrack from '@lyno/lib-jitsi-meet/dist/modules/RTC/JitsiLocalTrack';
-import { config } from 'webpack';
+import JitsiConference from "@lyno/lib-jitsi-meet/JitsiConference";
+import JitsiConnection from "@lyno/lib-jitsi-meet/JitsiConnection";
+import { Disposable } from "@typed/disposable";
+import { JitsiConnectionEvents } from '@lyno/lib-jitsi-meet/dist/JitsiConnectionEvents';
+import { JitsiConnectionErrors } from '@lyno/lib-jitsi-meet/dist/JitsiConnectionErrors';
+import { JitsiConferenceErrors } from '@lyno/lib-jitsi-meet/dist/JitsiConferenceErrors';
 
 export interface JitsiMeetOptions {
 	logLevel?: JitsiLogLevels;
-	connectionOptions?: typeof InitOptions | any;
+	connectionOptions?: InitOptions | any;
 	conferenceOptions?: JitsiConferenceOptions | any;
 	trackOptions?: CreateLocalTracksOptions
 }
@@ -26,7 +23,7 @@ export class JitsiMeet implements Disposable {
 	public connection: JitsiConnection | any;
 	public conference: JitsiConference | any;
 
-	public localTracks: JitsiTrack[] = [];
+	public localTracks: JitsiLocalTrack[] = [];
 	public remoteTracks: JitsiRemoteTrack[] = [];
 
 	private options: JitsiMeetOptions = {};
@@ -152,7 +149,7 @@ export class JitsiMeet implements Disposable {
 			this.conference.addEventListener(JitsiConferenceEvents.CONFERENCE_JOINED, () => resolve(true));
 
 			// Failure
-			this.conference.on(JitsiConferenceEvents.CONNECTION_INTERRUPTED, (e: JitsiConferenceErrors) => reject(new Error(e)));
+			this.conference.on(JitsiConferenceEvents.CONNECTION_INTERRUPTED, (e: JitsiConnectionErrors) => reject(new Error(e)));
 			this.conference.on(JitsiConferenceEvents.CONFERENCE_FAILED, (e: JitsiConferenceErrors) => reject(new Error(e)));
 
 			// Add provided event listeners

@@ -10,7 +10,7 @@
 	"author": "",
 	"license": "MIT",
 	"dependencies": {
-		"@lyno/lib-jitsi-meet": "2.6726.1"
+		"@lyno/lib-jitsi-meet": "^2.6726.2"
 	},
 	"devDependencies": {
 		"copy-webpack-plugin": "^10.1.0",

@@ -96,25 +96,26 @@ async function main() {
 	jitsiMeet = new JitsiMeet(JitsiMeet.CONFIG_DOCKER);
 	// jitsiMeet = new JitsiMeet(JitsiMeet.CONFIG_MEET_JIT_SI);
 
+	// You could subscribe to connection events here, but you can also just catch the errors instead. 
+	// jitsiMeet.addEventListener(JitsiConnectionEvents.CONNECTION_ESTABLISHED, () => console.log("Connected!"));
+
 	// Returns the user's id if the connection was successful and throws an error if it was not. 
 	await jitsiMeet.connect("talentedblocksgetthis");
 
 	// After this point the connection to the server is established, but the conference hasn't been joined yet. 
 	console.log("Connected!");
 
-	// Todo: Fix event listeners
-	// One category of events particularly makes sense to subscribe to here: (these don't work yet for some reason)
-	// jitsiMeet.on(JitsiConferenceEvents.CONFERENCE_JOIN_IN_PROGRESS, () => console.log("Joining conference ... EPIC STYLE"));
-	jitsiMeet.on(JitsiConferenceEvents.CONFERENCE_JOINED, () => console.log("... conference joined! EPIC STYLE"));
-
-	// jitsiMeet.addEventListener(JitsiConferenceEvents.CONFERENCE_JOIN_IN_PROGRESS, () => console.log("Joining conference ... Not that epic but it's something"));
-	jitsiMeet.addEventListener(JitsiConferenceEvents.CONFERENCE_JOINED, () => console.log("... conference joined! Not that epic but it's something"));
-
-	// jitsiMeet.conference.addEventListener(JitsiConferenceEvents.CONFERENCE_JOIN_IN_PROGRESS, () => console.log("Joining conference ... lame style"));
-	jitsiMeet.conference.addEventListener(JitsiConferenceEvents.CONFERENCE_JOINED, () => console.log("... conference joined ... lame style"));
+	// One category of events particularly makes sense to subscribe to here: 
+	jitsiMeet.addEventListener(JitsiConferenceEvents.CONFERENCE_JOIN_IN_PROGRESS, () => console.log("Joining conference ... "));
+	jitsiMeet.addEventListener(JitsiConferenceEvents.CONFERENCE_JOINED, () => console.log("... conference joined!"));
+	// Equivalent to:
+	// jitsiMeet.conference.addEventListener(JitsiConferenceEvents.CONFERENCE_JOINED, () => console.log("... conference joined!"));
+	// And:
+	// jitsiMeet.on(JitsiConferenceEvents.CONFERENCE_JOINED, () => console.log("... conference joined!"));
 
 	await jitsiMeet.joinConference();
-	// At this point the conference has been joined. The full features are available for subscription (but they also were before). 
+
+	// At this point the conference has been joined and the connection is all ready. 
 
 	// Let's begin caring about the UI. 
 
@@ -124,6 +125,7 @@ async function main() {
 
 	// Create local media tracks
 	let tracks: JitsiLocalTrack[] = await JitsiMeetJS.createLocalTracks({ devices: ['audio', 'video'] }) as JitsiLocalTrack[];
+
 	// Add them to the jitsi meet object
 	jitsiMeet.localTracks = tracks; // TODO: These tracks are barely used by Jitsi Meet, plus local and remote tracks are often handled together. Might want to unify. 
 

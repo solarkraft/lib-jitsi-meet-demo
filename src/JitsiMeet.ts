@@ -91,8 +91,6 @@ export class JitsiMeet implements Disposable {
 		// Initialize
 		JitsiMeetJS.init({});
 		JitsiMeetJS.setLogLevel(this.options.logLevel);
-
-		this.connection = new JitsiMeetJS.JitsiConnection(null, null, this.options.connectionOptions); // app id and token are generally not required
 	}
 
 	/**
@@ -108,6 +106,7 @@ export class JitsiMeet implements Disposable {
 			this.connection = new JitsiMeetJS.JitsiConnection(null, null, this.options.connectionOptions);
 
 			this.connection.addEventListener(JitsiConnectionEvents.CONNECTION_ESTABLISHED, (id) => {
+				// Pre-create the conference so it's available to bind event listeners to
 				this.conference = this.connection.initJitsiConference(this.options.connectionOptions.roomName, {});
 				resolve(id);
 			});
@@ -127,7 +126,6 @@ export class JitsiMeet implements Disposable {
 		return new Promise<any>(((resolve, reject) => {
 			console.debug("connected", "Connection:", this.connection, "Conference:", this.conference);
 			console.info("Connection succeeded!");
-
 
 			this.conference.on(JitsiMeetJS.events.conference.CONFERENCE_JOINED, () => this.conferenceJoined());
 			this.conference.on(JitsiMeetJS.events.conference.CONFERENCE_JOINED, () => resolve(null));
@@ -167,15 +165,16 @@ export class JitsiMeet implements Disposable {
 			if (!this.connection) {
 				throw new Error("The connection hasn't been created yet!");
 			}
-			this.connection.addEventListener(JitsiMeetJS.events.connection.CONNECTION_ESTABLISHED, listener);
-			this.eventListeners.set(listener, event as JitsiConnectionEvents | JitsiConferenceEvents);
+			this.connection.addEventListener(event, listener);
+			this.eventListeners.set(listener, event as JitsiConnectionEvents);
 
 		} else if (event.startsWith("conference.")) {
-			if (!this.connection) {
+			if (!this.conference) {
 				throw new Error("The conference hasn't been created yet!");
 			}
 			console.debug("Adding listener for conference event", event);
-			this.eventListeners.set(listener, event as JitsiConnectionEvents | JitsiConferenceEvents);
+			this.conference.addEventListener(event, listener);
+			this.eventListeners.set(listener, event as JitsiConferenceEvents);
 
 		} else if (event.startsWith("track.")) {
 

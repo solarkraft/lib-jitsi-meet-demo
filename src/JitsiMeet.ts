@@ -180,11 +180,6 @@ export class JitsiMeet implements Disposable {
 
 			this.conference.addEventListener(JitsiConferenceEvents.CONFERENCE_LEFT, () => resolve(true));
 
-			// Add provided event listeners
-			listeners?.forEach((listener, event: JitsiConferenceEvents) => {
-				this.conference.addEventListener(event, listener);
-			});
-
 			this.conference.leave();
 			this.conference = null;
 

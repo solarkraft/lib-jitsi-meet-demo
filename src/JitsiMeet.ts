@@ -235,7 +235,8 @@ export class JitsiMeet implements Disposable {
 		});
 	}
 
-	/** Create local tracks (audio/video/desktop) and add them to the current conference. 
+	/** 
+	 * Create local tracks (audio/video/desktop) and add them to the current conference. 
 	 * Will take provided CreateLocalTracksOptions, the value from options.trackOptions or a default value (audio and video). 
 	 * @param options CreateLocalTracksOptions
 	 * @returns true
@@ -257,6 +258,9 @@ export class JitsiMeet implements Disposable {
 		});
 	}
 
+	/** 
+	 * Leave the current conference and disconnect from the server
+	 */
 	public async disconnect() {
 		await this.leaveConference();
 		this.connection?.disconnect();
@@ -265,6 +269,7 @@ export class JitsiMeet implements Disposable {
 		this.connection = null;
 	}
 
+	/** Leave the conference, disconnect from the server and dispose local objects */
 	public dispose(): void {
 		this.disconnect();
 

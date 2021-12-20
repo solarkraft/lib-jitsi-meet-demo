@@ -9,9 +9,8 @@ import $ from 'jquery';
 
 import { JitsiMeet } from './JitsiMeet';
 
-/**
-* Creates a video/audio element in the UI for a given track
-* @param track JitsiTrack object
+/** Creates a video/audio element in the UI for a given track
+*   @param track JitsiTrack object
 */
 function showTrack(track: JitsiTrack) {
 	console.debug("showTrack", track);
@@ -83,6 +82,8 @@ function showTrack(track: JitsiTrack) {
 	console.debug("Attached to container", el)
 }
 
+/** Removes/disposes a track and removes its container from the UI
+ *  @param track track to be removed */
 function removeTrack(track: JitsiTrack) {
 	let containers: HTMLElement[]
 		// @ts-ignore // The containers property is not in the Typescript definition yet
@@ -97,6 +98,7 @@ function removeTrack(track: JitsiTrack) {
 	});
 }
 
+/** Set up the UI controls */
 function setUpUi() {
 	console.info("Adding UI buttons");
 	let actions = new Map<string, Function>([
@@ -118,6 +120,7 @@ function setUpUi() {
 	});
 }
 
+/** Update dynamic values in the UI */
 function updateConferenceDisplay() {
 	(document.querySelector("#conferenceName") as HTMLInputElement).value = jitsiMeet.conference?.getName() || "";
 	document.querySelector("#joinButton").addEventListener("click", () => {

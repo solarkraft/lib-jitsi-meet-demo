@@ -8,6 +8,7 @@ import { JitsiConferenceEvents } from '@lyno/lib-jitsi-meet/dist/JitsiConference
 import $ from 'jquery';
 
 import { JitsiMeet } from './JitsiMeet';
+import JitsiLocalTrack from '@lyno/lib-jitsi-meet/dist/modules/RTC/JitsiLocalTrack';
 
 /** Creates a video/audio element in the UI for a given track
 *   @param track JitsiTrack object
@@ -145,6 +146,8 @@ async function main() {
 	// config.connectionOptions.serviceUrl = "wss://localhost:8443/xmpp-websocket";
 	// config.connectionOptions.serviceUrl = "https://localhost:8443/http-bind";
 
+	config.conferenceOptions = { startAudioMuted: true };
+
 	jitsiMeet = new JitsiMeet(config);
 
 	// You could subscribe to connection events here, but you can also just catch the errors instead. 
@@ -172,7 +175,10 @@ async function main() {
 		[JitsiConferenceEvents.MESSAGE_RECEIVED, (usr: string, msg: string) => console.log(`Received message from user ${usr}: ${msg}`)],
 		[JitsiConferenceEvents.KICKED, () => console.log("Kicked :(")],
 
-		[JitsiConferenceEvents.TRACK_ADDED, (track: JitsiTrack) => showTrack(track)], // Show a new track that has been added (e.g. on user join)
+		[JitsiConferenceEvents.TRACK_ADDED, (track: JitsiTrack) => {
+			track.isLocalAudioTrack() ? (track as JitsiLocalTrack).mute() : null; // Mute local audio track (startAudioMuted) doesn't seem to work
+			showTrack(track);
+		}], // Show a new track that has been added (e.g. on user join)
 		[JitsiConferenceEvents.TRACK_REMOVED, (track: JitsiTrack) => removeTrack(track)], // Remove a user's UI elements when they leave
 
 		[JitsiConferenceEvents.CONFERENCE_JOINED, async () => {
@@ -180,10 +186,6 @@ async function main() {
 			await jitsiMeet.createLocalTracks();
 
 			updateConferenceDisplay();
-
-			// Intially mute local audio. Can later be done using jitsiMeet.conference.getLocalAudioTrack().mute()
-			let localAudio = jitsiMeet.localTracks.find(t => t.getType() == MediaType.AUDIO);
-			await localAudio?.mute();
 		}],
 
 		[JitsiConferenceEvents.CONFERENCE_LEFT, () => { updateConferenceDisplay() }],

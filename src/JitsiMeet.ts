@@ -42,10 +42,34 @@ export class JitsiMeet implements Disposable {
 		this.roomId = roomId.toLowerCase();
 
 		// This has only been tested with meet.jit.si. Other installations may be configured differently. 
+		// this.options.connectionOptions = {
+		// 	hosts: {
+		// 		domain: this.host,
+		// 		// muc: `conference.${this.host}`,
+		// 		//muc: this.host, // if this is wrong, the connection fails with Strophe: BOSH-Connection failed: improper-addressing
+		// 		muc: "meet.jitsi",
+		// 	},
+		// 	// Can either be a WebSockets (wss://...) or BOSH (.../http-bind) URL. WebSockets are generally preferable, but require the client to run on the same domain
+		// 	// as the host or the host to have cross_domain_websocket enabled (due to CORS). The properties bosh and websockets are deprecated in favor of this format. 
+		// 	serviceUrl: `https://${this.host}/http-bind?room=${this.roomId}`,
+
+		// 	deploymentInfo: {}, // Gets rid of a type error
+
+		// 	// Not strictly necessary
+		// 	enableWindowOnErrorHandler: true,
+		// 	disableThirdPartyRequests: true,
+		// };
+
+
+		// Version for local host (docker)
 		this.options.connectionOptions = {
 			hosts: {
 				domain: this.host,
-				muc: `conference.${this.host}`,
+				// muc: `conference.${this.host}`,
+				//muc: this.host, // if this is wrong, the connection fails with Strophe: BOSH-Connection failed: improper-addressing
+				muc: "muc.meet.jitsi", 
+				anonymousdomain: "meet.jitsi", // internal domain. meet.jitsi by default (docker). used for something something initial connection
+				focus: "focus.meet.jitsi", 
 			},
 			// Can either be a WebSockets (wss://...) or BOSH (.../http-bind) URL. WebSockets are generally preferable, but require the client to run on the same domain
 			// as the host or the host to have cross_domain_websocket enabled (due to CORS). The properties bosh and websockets are deprecated in favor of this format. 

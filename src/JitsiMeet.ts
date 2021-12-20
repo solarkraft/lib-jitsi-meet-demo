@@ -102,9 +102,6 @@ export class JitsiMeet implements Disposable {
 		}));
 	}
 
-	/**
-	* Called when the connection is established. Used for setup. 
-	*/
 	public async joinConference(name: string, listeners: Map<JitsiConferenceEvents, Function>): Promise<any> {
 		if (name && this.options?.connectionOptions?.roomName) {
 			console.warn(`Room name overridden by options.connectionOptions.roomName (${this.options.connectionOptions.roomName} instead of ${name}). You should only set one. `);
@@ -112,9 +109,6 @@ export class JitsiMeet implements Disposable {
 		}
 		return new Promise<any>(((resolve, reject) => {
 			this.conference = this.connection.initJitsiConference(name.toLowerCase(), {});
-
-			console.debug("connected", "Connection:", this.connection, "Conference:", this.conference);
-			console.info("Connection succeeded!");
 
 			// Success
 			this.conference.addEventListener(JitsiConferenceEvents.CONFERENCE_JOINED, () => this.conferenceJoined());
@@ -147,25 +141,16 @@ export class JitsiMeet implements Disposable {
 	}
 
 	public dispose(): void {
-		this.unload();
-		this.localTracks.forEach(track => {
-			track.dispose()
-		});
-		this.remoteTracks.forEach(track => {
-			track.dispose()
-		});
-	}
-
-	/**
-	*
-	*/
-	private unload() {
-		console.debug("unload", this.localTracks);
-
-		for (let i = 0; i < this.localTracks.length; i++) {
-			this.localTracks[i].dispose();
-		}
 		this.conference.leave();
 		this.connection.disconnect();
+
+		this.remoteTracks.forEach(track => {
+			console.debug("Disposing remote track", track)
+			track.dispose()
+		});
+		this.localTracks.forEach(track => {
+			console.debug("Disposing local track", track)
+			track.dispose()
+		});
 	}
 }

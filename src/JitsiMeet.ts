@@ -41,7 +41,7 @@ export class JitsiMeet implements Disposable {
 		return {
 			logLevel: JitsiLogLevels.WARN,
 			connectionOptions: {
-				roomName: "talentedblocksgetthis",
+				roomName: "", // The public Jitsi Meet instance seems to do extra routing on connection based on the room name, hence it must be provided before connecting. 
 				hosts: {
 					domain: "meet.jit.si",
 					muc: "conference.meet.jit.si", // if this is wrong, the connection fails with Strophe: BOSH-Connection failed: improper-addressing
@@ -49,8 +49,8 @@ export class JitsiMeet implements Disposable {
 				// Can either be a WebSockets (wss://...) or BOSH (.../http-bind) URL. WebSockets are generally preferable, but require the client to run on the same domain
 				// as the host or the host to have cross_domain_websocket enabled (due to CORS). The properties bosh and websockets are deprecated in favor of this format. 
 				// The value of the query parameter doesn't seem to have any effect, however it is set by the official client. 
-				get serviceUrl() { return "https://meet.jit.si/http-bind?room="+this.roomName; },
-				// get serviceUrl() { return "https://localhost:8443/http-bind" }, // this would work
+				baseServiceUrl: "https://meet.jit.si/http-bind?room=",
+				get serviceUrl() { return this.baseServiceUrl+this.roomName.toLowerCase(); },
 				deploymentInfo: {}, // Gets rid of an error when Strophe tries to add properties (only seen on meet.jit.si)
 			}
 		}
@@ -63,18 +63,14 @@ export class JitsiMeet implements Disposable {
 		return {
 			logLevel: JitsiLogLevels.WARN,
 			connectionOptions: {
-				roomName: "talentedblocksgetthis",
-				hosts: {
-					domain: "localhost:8443",
-					muc: "muc.meet.jitsi", // session coordinator. If this is wrong, the connection fails with Strophe: BOSH-Connection failed: improper-addressing
-					anonymousdomain: "meet.jitsi", // internal domain. meet.jitsi by default (docker). used for something something initial connection
-					focus: "focus.meet.jitsi", // video stream coordinator
-				},
 				// Can either be a WebSockets (wss://...) or BOSH (.../http-bind) URL. WebSockets are generally preferable, but require the client to run on the same domain
 				// as the host or the host to have cross_domain_websocket enabled (due to CORS). The properties bosh and websockets are deprecated in favor of this format. 
-				// The value of the query parameter doesn't seem to have any effect, however it is set by the official client. 
-				get serviceUrl() { return "https://localhost:8443/http-bind?room="+this.roomName; },
-				// get serviceUrl() { return "https://localhost:8443/http-bind" }, // this would work
+				serviceUrl: "https://localhost:8443/http-bind",
+				hosts: {
+					anonymousdomain: "meet.jitsi", // internal domain. meet.jitsi by default (docker). used for something something initial connection
+					muc: "muc.meet.jitsi", // session coordinator. If this is wrong, the connection fails with Strophe: BOSH-Connection failed: improper-addressing
+					focus: "focus.meet.jitsi", // video stream coordinator. If this is wrong, you won't see any video and get "Focus error"s on the console. 
+				},
 			}
 		}
 	}
@@ -93,11 +89,7 @@ export class JitsiMeet implements Disposable {
 	 * Connect to the server. Returns the user's id if the connection was successful and throws an error if it was not. Prepares the conference. 
 	 * @param roomName The room/conference you want to join, if not configured in connectionOptions. 
 	 */
-	public async connect(roomName?: string, listeners?: Map<JitsiConnectionEvents, Function>): Promise<any> {
-		if(this.options?.connectionOptions?.roomName) {
-			this.options.connectionOptions.roomName = roomName;
-		}
-
+	public async connect(listeners?: Map<JitsiConnectionEvents, Function>): Promise<any> {
 		return new Promise<any>(((resolve, reject) => {
 			this.connection = new JitsiMeetJS.JitsiConnection(null, null, this.options.connectionOptions);
 
@@ -119,9 +111,13 @@ export class JitsiMeet implements Disposable {
 	/**
 	* Called when the connection is established. Used for setup. 
 	*/
-	public async joinConference(roomId: string, listeners: Map<JitsiConferenceEvents, Function>): Promise<any> {
+	public async joinConference(name: string, listeners: Map<JitsiConferenceEvents, Function>): Promise<any> {
+		if(name && this.options?.connectionOptions?.roomName) {
+			console.warn(`Room name overridden by options.connectionOptions.roomName (${this.options.connectionOptions.roomName} instead of ${name}). You should only set one. `);
+			name = this.options.connectionOptions.roomName;
+		}
 		return new Promise<any>(((resolve, reject) => {
-			this.conference = this.connection.initJitsiConference(this.options.connectionOptions.roomName, {});
+			this.conference = this.connection.initJitsiConference(name.toLowerCase(), {});
 
 			console.debug("connected", "Connection:", this.connection, "Conference:", this.conference);
 			console.info("Connection succeeded!");

@@ -87,11 +87,14 @@ let jitsiMeet: JitsiMeet;
 async function main() {
 	// Only meet.jit.si has been found to work by default (using BOSH). Most other instances have restrictive CORS settings. 
 
+	let roomName = "TalentedBlocksGetThis";
 
-	// let config = JitsiMeet.CONFIG_MEET_JIT_SI; 
+	// let config = JitsiMeet.CONFIG_MEET_JIT_SI;
+	// Because the public Jitsi Meet instance does extra routing on connection based on the room name, it needs to be supplied earlier than ususal.
+	// config.connectionOptions.roomName = roomName; // This property overrides the room name used on joinConference(). Setting both produces a warning. 
+
 	let config = JitsiMeet.CONFIG_DOCKER;
-
-	// config.connectionOptions.hosts.muc = "muc.meet.jitsi";
+	// Main address. <your server>/http-bind
 	// config.connectionOptions.serviceUrl = "https://localhost:8443/http-bind";
 
 	jitsiMeet = new JitsiMeet(config);
@@ -107,7 +110,7 @@ async function main() {
 	]);
 
 	// Returns the user's id if the connection was successful and throws an error if it was not. 
-	await jitsiMeet.connect("talentedblocksgetthis", connectionEventListeners);
+	await jitsiMeet.connect(connectionEventListeners);
 
 	// After this point the connection to the server is established, but the conference hasn't been joined yet. 
 	console.log("Connected to the server!");
@@ -126,7 +129,7 @@ async function main() {
 		[JitsiConferenceEvents.TRACK_REMOVED, track => removeTrack(track)], // Remove a user's UI elements when they leave
 	]);
 
-	await jitsiMeet.joinConference("TalentedBlocksGetThis", conferenceEventListeners);
+	await jitsiMeet.joinConference(roomName, conferenceEventListeners);
 
 	// At this point the conference has been joined and the connection is all ready. 
 

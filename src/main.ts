@@ -5,6 +5,7 @@ import JitsiTrack from '@lyno/lib-jitsi-meet/dist/modules/RTC/JitsiTrack';
 import { MediaType } from '@lyno/lib-jitsi-meet/dist/service/RTC/MediaType';
 import { JitsiConnectionEvents } from '@lyno/lib-jitsi-meet/dist/JitsiConnectionEvents';
 import { JitsiConferenceEvents } from '@lyno/lib-jitsi-meet/dist/JitsiConferenceEvents';
+import $ from 'jquery';
 
 import { JitsiMeet } from './JitsiMeet';
 
@@ -19,7 +20,7 @@ function showLocalTracks(jitsiMeet: JitsiMeet) {
 			$('body').append(`<video autoplay='1' id='localVideo${i}' class='local ${i}' />`);
 			track.attach($(`#localVideo${i}`)[0]);
 		} else if (track.getType() === MediaType.AUDIO) {
-			$('body').append(`<audio autoplay='1' muted='true' id='localAudio${i}' class='local ${i}' />`);
+			$('body').append(`<audio autoplay='1' muted='false' id='localAudio${i}' class='local ${i}' />`);
 			track.attach($(`#localAudio${i}`)[0]);
 			// @ts-ignore
 		} else if (track.getType() === 'desktop') {

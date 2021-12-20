@@ -144,8 +144,6 @@ async function main() {
 	// config.connectionOptions.serviceUrl = "wss://localhost:8443/xmpp-websocket";
 	// config.connectionOptions.serviceUrl = "https://localhost:8443/http-bind";
 
-	config.conferenceOptions = { startAudioMuted: true };
-
 	jitsiMeet = new JitsiMeet(config);
 
 	// You could subscribe to connection events here, but you can also just catch the errors instead. 

@@ -113,6 +113,7 @@ export class JitsiMeet implements Disposable {
 	 * @returns true if a new conference was joined, false if the method was aborted due to already being in that conference. 
 	 */
 	public async joinConference(name: string, listeners?: Map<JitsiConferenceEvents, Function>): Promise<boolean> {
+		// TODO: Cancel other already running joinConference()s
 		console.debug("joinConference");
 		if (name && this.options?.connectionOptions?.roomName) {
 			console.warn(`Room name overridden by options.connectionOptions.roomName (${this.options.connectionOptions.roomName} instead of ${name}). You should only set one. `);

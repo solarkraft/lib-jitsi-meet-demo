@@ -47,9 +47,8 @@ function showTrack(track: JitsiTrack) {
 	if (track.getType() === MediaType.AUDIO) {
 		let id = participantId + "audio" + idx;
 		
-		// FIXME: Currently gets called twice for local tracks
 		if(document.getElementById(id)) {
-			console.debug("Video element with the id", id, "already exists")
+			console.warn("Video element with the id", id, "already exists")
 			return;
 		}
 
@@ -71,9 +70,8 @@ function showTrack(track: JitsiTrack) {
 		el.classList.add(userClass);
 		el.classList.add(trackClass);
 
-		// FIXME: Currently gets called twice for local tracks
 		if(document.getElementById(id)) {
-			console.debug("Video element with the id", id, "already exists")
+			console.warn("Video element with the id", id, "already exists")
 			return;
 		}
 

@@ -81,6 +81,25 @@ function removeTrack(track: JitsiTrack) {
 	});
 }
 
+function setUpUi() {
+	console.info("Adding UI buttons");
+	let actions = new Map<string, Function>([
+		["Join conference TalentedBlocksGetThis", () => jitsiMeet.joinConference('TalentedBlocksGetThis')],
+		["Join conference BrokenEncountersExpandAgo", () => jitsiMeet.joinConference('BrokenEncountersExpandAgo')],
+		["Leave conference", () => jitsiMeet.leaveConference()],
+		["Disconnect", () => jitsiMeet.dispose()],
+	]);
+	let controls = document.querySelector("#controls");
+
+	actions.forEach((action, description) => {
+		let button: HTMLElement = document.createElement("button", {});
+		button.innerText = description;
+		button.addEventListener("click", () => action());
+		controls.appendChild(button);
+	});
+
+}
+
 let jitsiMeet: JitsiMeet;
 
 async function main() {
@@ -148,6 +167,8 @@ async function main() {
 	window.APP = jitsiMeet; // Similar to the official web app
 	// @ts-ignore
 	window.JitsiMeetJS = JitsiMeetJS; // useful in REPL
+
+	setUpUi();
 }
 
 main().catch((e) => { alert(e); console.log(e) });

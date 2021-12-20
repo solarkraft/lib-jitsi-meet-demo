@@ -25,15 +25,14 @@
 			.localUserInfo span {
 				font-weight: bold;
 			}
+
+			button {
+				margin: 0.2rem;
+			}
 		</style>
 	</head>
 	<body>
-		<div class="controls">
-			<button onclick="APP.joinConference('TalentedBlocksGetThis')">Join conference TalentedBlocksGetThis</button>
-			<button onclick="APP.joinConference('BrokenEncountersExpandAgo')">Join conference BrokenEncountersExpandAgo</button>
-			<button onclick="APP.leaveConference()">Leave conference</button>
-			<button onclick="APP.dispose()">Disconnect</button>
-		</div>
+		<div id="controls"><!-- Controls are added in JS --></div>
 
 		<script src="https://unpkg.com/jquery@3.3.1/dist/jquery.min.js"></script> <!-- Required by Strophe (lib-jitsi-meet dependency)-->
 		<script src="bundle.js"></script>

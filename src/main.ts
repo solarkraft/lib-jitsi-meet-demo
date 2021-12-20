@@ -92,7 +92,6 @@ let jitsiMeet: JitsiMeet;
 
 async function main() {
 	// Only meet.jit.si has been found to work by default (using BOSH). Most other instances have restrictive CORS settings. 
-	// So far only the clients can communicate between each other. A Jitsi Meet client pointed to the same room is currently not able to interact. 
 
 	jitsiMeet = new JitsiMeet(JitsiMeet.CONFIG_DOCKER);
 	// jitsiMeet = new JitsiMeet(JitsiMeet.CONFIG_MEET_JIT_SI);

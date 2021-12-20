@@ -51,9 +51,11 @@ export class JitsiMeet implements Disposable {
 					muc: "conference.meet.jit.si", // if this is wrong, the connection fails with Strophe: BOSH-Connection failed: improper-addressing
 				},
 				// Can either be a WebSockets (wss://...) or BOSH (.../http-bind) URL. WebSockets are generally preferable, but require the client to run on the same domain
-				// as the host or the host to have cross_domain_websocket enabled (due to CORS). The bosh and websockets properties are deprecated in favor of this format. 
+				// as the host or the host to have cross_domain_websocket enabled (due to CORS). The properties bosh and websockets are deprecated in favor of this format. 
+				// The value of the query parameter doesn't seem to have any effect, however it is set by the official client. 
 				get serviceUrl() { return "https://meet.jit.si/http-bind?room="+this.roomName; },
-				deploymentInfo: {}, // Gets rid of an error when Strophe tries to add properties
+				// get serviceUrl() { return "https://localhost:8443/http-bind" }, // this would work
+				deploymentInfo: {}, // Gets rid of an error when Strophe tries to add properties (only seen on meet.jit.si)
 			}
 		}
 	}
@@ -74,7 +76,9 @@ export class JitsiMeet implements Disposable {
 				},
 				// Can either be a WebSockets (wss://...) or BOSH (.../http-bind) URL. WebSockets are generally preferable, but require the client to run on the same domain
 				// as the host or the host to have cross_domain_websocket enabled (due to CORS). The properties bosh and websockets are deprecated in favor of this format. 
+				// The value of the query parameter doesn't seem to have any effect, however it is set by the official client. 
 				get serviceUrl() { return "https://localhost:8443/http-bind?room="+this.roomName; },
+				// get serviceUrl() { return "https://localhost:8443/http-bind" }, // this would work
 			}
 		}
 	}
@@ -101,7 +105,7 @@ export class JitsiMeet implements Disposable {
 			this.connection = new JitsiMeetJS.JitsiConnection(null, null, this.options.connectionOptions);
 
 			this.connection.addEventListener(JitsiConnectionEvents.CONNECTION_ESTABLISHED, (id) => {
-				this.conference = this.connection.initJitsiConference("conference", {});
+				this.conference = this.connection.initJitsiConference(this.options.connectionOptions.roomName, {});
 				resolve({ id });
 			});
 

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Jitsi Meet Example</title>
+		<style>
+			body {
+				margin: 1vw;
+				padding: 0;
+				font-family: sans-serif;
+			}
+
+			video {
+				border-radius: 0.5rem;
+				width: 48vw;
+				margin: 0.5vw;
+				padding: 0;
+			}
+
+			#localVideo1 {
+				box-shadow: green 0 0.125rem 1rem;
+			}
+
+			.localUserInfo span {
+				font-weight: bold;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="controls">
+			<button onclick="APP.dispose()">Disconnect</button>
+		</div>
+
+		<script src="https://unpkg.com/jquery@3.3.1/dist/jquery.min.js"></script> <!-- Required by Strophe (lib-jitsi-meet dependency)-->
+		<script src="bundle.js"></script>
+	</body>
+</html>

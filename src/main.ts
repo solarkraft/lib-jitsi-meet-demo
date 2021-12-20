@@ -102,7 +102,12 @@ function setUpUi() {
 }
 
 function updateConferenceDisplay() {
-	document.querySelector("#conferenceLabel").innerHTML = jitsiMeet?.conference?.getName() || "No conference";
+	(document.querySelector("#conferenceName") as HTMLInputElement).value = jitsiMeet.conference?.getName() || "no_conference";
+	document.querySelector("#joinButton").addEventListener("click", () => {
+		let newConference = (document.querySelector("#conferenceName") as HTMLInputElement).value;
+		jitsiMeet.joinConference(newConference);
+	});
+
 }
 
 let jitsiMeet: JitsiMeet;

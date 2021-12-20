@@ -114,13 +114,14 @@ export class JitsiMeet implements Disposable {
 	}
 
 	/**
-	 * Join a new conference or leave the current conference and join another. 
+	 * Join a new conference or leave the current conference and join another. Triggers leaveConference on an empty room name. 
 	 * Seemingly only one conference is supported per connection by JitsiMeetJS. 
 	 * @param name The name of the conference to join. Can be any string. Example: ParallelPerceptionsDefineReasonably. Automatically transformed to lower case. 
 	 * @param listeners Listeners for events on the conference to add before the conference is joined. If this parameter is not provided, there will be an attempt to use eventListeners from the previous run. 
-	 * @returns true if a new conference was joined, false if the method was aborted due to already being in that conference. 
+	 * @returns true if a new conference was joined, false if the method was aborted due to already being in that conference or the room name being empty. 
 	 */
 	public async joinConference(name: string, listeners?: Map<JitsiConferenceEvents, Function>): Promise<boolean> {
+		name = name.toLowerCase();
 		// TODO: Cancel other already running joinConference()s
 		if(!this.connection) { console.info("joinConference has been called without an existing connection, doing nothing"); return; }
 
@@ -129,12 +130,20 @@ export class JitsiMeet implements Disposable {
 			console.warn(`Room name overridden by options.connectionOptions.roomName (${this.options.connectionOptions.roomName} instead of ${name}). You should only set one. `);
 			name = this.options.connectionOptions.roomName;
 		}
+
 		return new Promise<boolean>(async (resolve, reject) => {
 			// Event listener preservation in case joinConference is called again without the listeners parameter
 			if (listeners) {
 				this.conferenceEventListeners = listeners;
 			} else {
 				listeners = this.conferenceEventListeners;
+			}
+
+			// This would be invalid. Leave the conference. 
+			if(!name) {
+				await this.leaveConference();
+				resolve(false);
+				return;
 			}
 
 			// Already in a conference

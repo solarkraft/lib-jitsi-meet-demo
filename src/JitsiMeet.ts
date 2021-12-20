@@ -145,9 +145,9 @@ export class JitsiMeet implements Disposable {
 
 		console.info(`Conference ${this.conference.options.name} joined`);
 
-		for (let i = 0; i < this.localTracks.length; i++) {
-			this.conference.addTrack(this.localTracks[i]);
-		}
+		this.localTracks.forEach(track => {
+			this.conference.addTrack(track)
+		});
 	}
 
 	public dispose(): void {

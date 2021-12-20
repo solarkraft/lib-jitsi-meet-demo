@@ -7,6 +7,7 @@ import { JitsiConnectionEvents } from '@lyno/lib-jitsi-meet/dist/JitsiConnection
 import { JitsiConferenceEvents } from '@lyno/lib-jitsi-meet/dist/JitsiConferenceEvents';
 
 import { JitsiMeet } from './JitsiMeet';
+import { HotUpdateChunk } from 'webpack';
 
 function showLocalTracks(jitsiMeet: JitsiMeet) {
 	console.debug("addLocalTracks", "tracks:", jitsiMeet.localTracks);
@@ -87,7 +88,7 @@ function setUpUi() {
 		["Join conference TalentedBlocksGetThis", () => jitsiMeet.joinConference('TalentedBlocksGetThis')],
 		["Join conference BrokenEncountersExpandAgo", () => jitsiMeet.joinConference('BrokenEncountersExpandAgo')],
 		["Leave conference", () => jitsiMeet.leaveConference()],
-		["Disconnect", () => jitsiMeet.dispose()],
+		["Disconnect", () => jitsiMeet.disconnect()],
 	]);
 	let controls = document.querySelector("#controls");
 
@@ -98,6 +99,10 @@ function setUpUi() {
 		controls.appendChild(button);
 	});
 
+}
+
+function updateConferenceDisplay() {
+	document.querySelector("#conferenceLabel").innerHTML = jitsiMeet?.conference?.getName() || "No conference";
 }
 
 let jitsiMeet: JitsiMeet;
@@ -152,7 +157,11 @@ async function main() {
 
 			// Display the local media tracks
 			showLocalTracks(jitsiMeet);
+
+			updateConferenceDisplay();
 		}],
+
+		[JitsiConferenceEvents.CONFERENCE_LEFT, () => {updateConferenceDisplay()}],
 
 	]);
 

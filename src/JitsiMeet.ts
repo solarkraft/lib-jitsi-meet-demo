@@ -206,9 +206,13 @@ export class JitsiMeet implements Disposable {
 		});
 	}
 
-	public dispose(): void {
-		this.conference?.leave();
+	public async disconnect() {
+		await this.leaveConference();
 		this.connection?.disconnect();
+	}
+
+	public dispose(): void {
+		this.disconnect();
 
 		this.remoteTracks.forEach(track => {
 			console.debug("Disposing remote track", track)

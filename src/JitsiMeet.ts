@@ -12,9 +12,42 @@ import { JitsiConnectionEvents } from '@lyno/lib-jitsi-meet/dist/JitsiConnection
 import { JitsiConnectionErrors } from '@lyno/lib-jitsi-meet/dist/JitsiConnectionErrors';
 import { JitsiConferenceErrors } from '@lyno/lib-jitsi-meet/dist/JitsiConferenceErrors';
 
+export interface ConnectionOptions {
+	/** The main address of your server. Can either be a WebSockets (wss://.../xmpp-websocket) or BOSH (.../http-bind) URL. 
+	 *  WebSocket is generally preferable. The properties `bosh` and `websocket` are deprecated in favor of this one. 
+	 *  The server needs to be configured to allow CORS with the domain your app runs on. The meet.jit.si instance has it enabled
+	 *  for BOSH, on a docker instance you can enable it by setting the environment variable `XMPP_CROSS_DOMAIN=true`. */
+	serviceUrl?: string,
+	hosts: {
+		/** Base domain. Only necessary on the public instance. Causes focus errors if set wrongly. */
+		domain?: string,
+		/** Internal domain of the "Multi user chat" (XMPP room/Session coordination). If this is wrong, the connection fails 
+		 *  silently when using the WebSocket or with Strophe: BOSH-Connection failed: improper-addressing
+		 *  when using BOSH. Default: muc.meet.jitsi (docker) or conference.meet.jit.si (official instance).
+		 *  Does not need to be publicly accessible. */
+		muc?: string,
+		/** Internal base domain. Likely used to infer others. Default (docker): meet.jitsi (undefined on public instance) */
+		anonymousdomain?: string,
+		/** Video stream coordinator. If this is wrong, you won't see any video and get "Focus error"s on the console. 
+		 *  Default (docker): `focus.meet.jitsi` */
+		focus?: string,
+	},
+	/** Can be used to change the `serviceUrl` when it is a get only property (meet.jit.si config).
+	 *  `room?=... query parameter` is automatically appendend. */
+	baseServiceUrl?: string,
+	/** If your Jitsi Meet instance does additional routing of users based on the requested room
+	 *  name passed in the serviceUrl `?room=...` query parameter, you may need to specify the room
+	 *  name on connection. So far this behavior has only been seen on the public meet.jit.si instance. */
+	roomName?: string;
+	/** May be necessary to prevent a type error when it is attempted to be modified. Only seen used on meet.jit.si */
+	deploymentInfo?: {}
+	[key: string]: any; // Allow any more options to be passed since there's a lot more that can be configured
+}
+
 export interface JitsiMeetOptions {
 	logLevel?: JitsiLogLevels;
-	connectionOptions?: InitOptions | any;
+	initOptions?: InitOptions;
+	connectionOptions?: ConnectionOptions;
 	conferenceOptions?: JitsiConferenceOptions;
 	trackOptions?: CreateLocalTracksOptions
 }
@@ -38,14 +71,12 @@ export class JitsiMeet implements Disposable {
 		return {
 			logLevel: JitsiLogLevels.WARN,
 			connectionOptions: {
-				roomName: "", // The public Jitsi Meet instance seems to do extra routing on connection based on the room name, hence it must be provided before connecting. 
+				// The public Jitsi Meet instance seems to do extra routing on connection based on the room name, hence it must be provided before connecting. 
+				roomName: "",
 				hosts: {
 					domain: "meet.jit.si",
-					muc: "conference.meet.jit.si", // if this is wrong, the connection fails with Strophe: BOSH-Connection failed: improper-addressing
+					muc: "conference.meet.jit.si",
 				},
-				// Can either be a WebSockets (wss://...) or BOSH (.../http-bind) URL. WebSockets are generally preferable, but require the client to run on the same domain
-				// as the host or the host to have cross_domain_websocket enabled (due to CORS). The properties bosh and websockets are deprecated in favor of this format. 
-				// The value of the query parameter doesn't seem to have any effect, however it is set by the official client. 
 				baseServiceUrl: "https://meet.jit.si/http-bind?room=",
 				get serviceUrl() { return this.baseServiceUrl + this.roomName.toLowerCase(); },
 				deploymentInfo: {}, // Gets rid of an error when Strophe tries to add properties (only seen on meet.jit.si)
@@ -60,14 +91,12 @@ export class JitsiMeet implements Disposable {
 		return {
 			logLevel: JitsiLogLevels.WARN,
 			connectionOptions: {
-				// Can either be a WebSockets (wss://...) or BOSH (.../http-bind) URL. WebSockets are generally preferable, but require the client to run on the same domain
-				// as the host or the host to have cross_domain_websocket enabled (due to CORS). The properties bosh and websockets are deprecated in favor of this format. 
 				// serviceUrl: "https://localhost:8443/http-bind",
 				serviceUrl: "wss://localhost:8443/xmpp-websocket",
 				hosts: {
-					anonymousdomain: "meet.jitsi", // internal domain. meet.jitsi by default (docker). used for something something initial connection
-					muc: "muc.meet.jitsi", // session coordinator. If this is wrong, the connection fails with Strophe: BOSH-Connection failed: improper-addressing
-					focus: "focus.meet.jitsi", // video stream coordinator. If this is wrong, you won't see any video and get "Focus error"s on the console. 
+					anonymousdomain: "meet.jitsi", // Internal domain. meet.jitsi by default (docker). may be used to infer others. 
+					muc: "muc.meet.jitsi", // Session coordinator. If this is wrong, the connection fails with Strophe: BOSH-Connection failed: improper-addressing
+					focus: "focus.meet.jitsi", // Video stream coordinator. If this is wrong, you won't see any video and get "Focus error"s on the console. 
 				},
 			}
 		}
@@ -77,7 +106,7 @@ export class JitsiMeet implements Disposable {
 		this.options = options;
 
 		// Initialize
-		JitsiMeetJS.init({});
+		JitsiMeetJS.init(this.options.initOptions || {});
 		if (this.options.logLevel) {
 			JitsiMeetJS.setLogLevel(this.options.logLevel);
 		}

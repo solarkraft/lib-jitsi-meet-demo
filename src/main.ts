@@ -8,6 +8,7 @@ import { JitsiConferenceEvents } from '@lyno/lib-jitsi-meet/dist/JitsiConference
 
 import { JitsiMeet } from './JitsiMeet';
 import { HotUpdateChunk } from 'webpack';
+import JitsiLocalTrack from '@lyno/lib-jitsi-meet/dist/modules/RTC/JitsiLocalTrack';
 
 function showLocalTracks(jitsiMeet: JitsiMeet) {
 	console.debug("addLocalTracks", "tracks:", jitsiMeet.localTracks);
@@ -43,14 +44,17 @@ function showTrack(track: JitsiTrack) {
 	// This function is also called for local tracks. We don't want to deal with those. 
 	if (track.isLocal()) { return; }
 
-	// @ts-ignore
-	const participantId: string = track.getParticipantId();
+	const participantId: string
+		// @ts-ignore
+		= track.getParticipantId();
 	console.log("Remote track from participant:", participantId)
 
 	// Add this track to the list of known tracks if it's not already in it
+	// @ts-ignore
 	if (!jitsiMeet.remoteTracks[participantId]) {
+		// @ts-ignore
 		jitsiMeet.remoteTracks[participantId] = [];
-	}
+	} // @ts-ignore
 	const idx = jitsiMeet.remoteTracks[participantId].push(track);
 
 	let audioContainer = $("body");
@@ -143,18 +147,18 @@ async function main() {
 	// After this point the connection to the server is established, but the conference hasn't been joined yet. 
 	console.log("Connected to the server!");
 
-	var conferenceEventListeners = new Map([
+	var conferenceEventListeners = new Map<JitsiConferenceEvents, Function>([
 		[JitsiConferenceEvents.CONFERENCE_JOIN_IN_PROGRESS, () => console.log("Joining conference ...")],
 		[JitsiConferenceEvents.CONFERENCE_JOINED, () => console.log("... conference joined")],
 
 		// These can also be added using jitsiMeet.conference.addEventListener and removed with jitsiMeet.conference.removeEventListener
-		[JitsiConferenceEvents.USER_JOINED, (usr, user: JitsiParticipant) => console.log(`User ${usr} joined (display name: ${user.getDisplayName()})`),],
-		[JitsiConferenceEvents.USER_LEFT, (usr) => console.log(`User ${usr} left`)],
-		[JitsiConferenceEvents.MESSAGE_RECEIVED, (usr: string, msg) => console.log(`Received message from user ${usr}: ${msg}`)],
+		[JitsiConferenceEvents.USER_JOINED, (usr: string, user: JitsiParticipant) => console.log(`User ${usr} joined (display name: ${user.getDisplayName()})`),],
+		[JitsiConferenceEvents.USER_LEFT, (usr: string) => console.log(`User ${usr} left`)],
+		[JitsiConferenceEvents.MESSAGE_RECEIVED, (usr: string, msg: string) => console.log(`Received message from user ${usr}: ${msg}`)],
 		[JitsiConferenceEvents.KICKED, () => console.log("Kicked :(")],
 
-		[JitsiConferenceEvents.TRACK_ADDED, track => showTrack(track)], // Show a new track that has been added (e.g. on user join)
-		[JitsiConferenceEvents.TRACK_REMOVED, track => removeTrack(track)], // Remove a user's UI elements when they leave
+		[JitsiConferenceEvents.TRACK_ADDED, (track: JitsiTrack) => showTrack(track)], // Show a new track that has been added (e.g. on user join)
+		[JitsiConferenceEvents.TRACK_REMOVED, (track: JitsiTrack) => removeTrack(track)], // Remove a user's UI elements when they leave
 
 		[JitsiConferenceEvents.CONFERENCE_JOINED, async () => {
 			// Create local media tracks

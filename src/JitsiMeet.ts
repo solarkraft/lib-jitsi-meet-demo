@@ -152,7 +152,7 @@ export class JitsiMeet implements Disposable {
 	public async joinConference(name: string, listeners?: Map<JitsiConferenceEvents, Function>): Promise<boolean> {
 		name = name.toLowerCase();
 		// TODO: Cancel other already running joinConference()s
-		if(!this.connection) { console.info("joinConference has been called without an existing connection, doing nothing"); return; }
+		if (!this.connection) { console.info("joinConference has been called without an existing connection, doing nothing"); return; }
 
 		console.debug("joinConference");
 		if (name && this.options?.connectionOptions?.roomName) {
@@ -169,7 +169,7 @@ export class JitsiMeet implements Disposable {
 			}
 
 			// This would be invalid. Leave the conference. 
-			if(!name) {
+			if (!name) {
 				await this.leaveConference();
 				resolve(false);
 				return;
@@ -217,7 +217,7 @@ export class JitsiMeet implements Disposable {
 	 */
 	public async leaveConference(listeners?: Map<JitsiConferenceEvents, Function>): Promise<boolean> {
 		console.info("leaveConference");
-		return new Promise<boolean>(async (resolve, reject) => {
+		return new Promise<boolean>(async (resolve) => {
 			if (!this.conference?.isJoined()) {
 				console.debug("No conference joined to leave");
 				resolve(false);
@@ -229,7 +229,8 @@ export class JitsiMeet implements Disposable {
 			this.conference.leave();
 			this.conference = null;
 
-			// This is against a bug in JitsiMeetJS causing a memory leak (Possible EventEmitter memory leak detected. 11 xmpp.speaker_stats_received listeners added)
+			// JitsiMeetJS keeps adding listeners for this event, but never removes them. Would eventually cause a memory leak warning
+			// ("Possible EventEmitter memory leak detected. 11 xmpp.speaker_stats_received listeners added")
 			this.connection.xmpp.eventEmitter.removeAllListeners("xmpp.speaker_stats_received");
 		});
 	}

@@ -64,7 +64,8 @@ export class JitsiMeet implements Disposable {
 			connectionOptions: {
 				// Can either be a WebSockets (wss://...) or BOSH (.../http-bind) URL. WebSockets are generally preferable, but require the client to run on the same domain
 				// as the host or the host to have cross_domain_websocket enabled (due to CORS). The properties bosh and websockets are deprecated in favor of this format. 
-				serviceUrl: "https://localhost:8443/http-bind",
+				// serviceUrl: "https://localhost:8443/http-bind",
+				serviceUrl: "wss://localhost:8443/xmpp-websocket",
 				hosts: {
 					anonymousdomain: "meet.jitsi", // internal domain. meet.jitsi by default (docker). used for something something initial connection
 					muc: "muc.meet.jitsi", // session coordinator. If this is wrong, the connection fails with Strophe: BOSH-Connection failed: improper-addressing

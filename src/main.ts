@@ -112,7 +112,8 @@ async function main() {
 	// config.connectionOptions.roomName = roomName; // This property overrides the room name used on joinConference(). Setting both produces a warning. 
 
 	let config = JitsiMeet.CONFIG_DOCKER;
-	// Main address. <your server>/http-bind
+	// Main address. wss://<your server>/xmpp-websocket for WebSocket or https://<your server>/http-bind for BOSH (WebSocket preferred)
+	// config.connectionOptions.serviceUrl = "wss://localhost:8443/xmpp-websocket";
 	// config.connectionOptions.serviceUrl = "https://localhost:8443/http-bind";
 
 	jitsiMeet = new JitsiMeet(config);

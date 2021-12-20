@@ -12,7 +12,8 @@ import { JitsiMeet } from './JitsiMeet';
 function showLocalTracks(jitsiMeet: JitsiMeet) {
 	console.debug("addLocalTracks", "tracks:", jitsiMeet.localTracks);
 
-	jitsiMeet.localTracks.forEach((track, i) => {
+	let i = 0;
+	jitsiMeet.localTracks.forEach((track) => {
 		// Add tracks to body
 		console.log("Showing track", track);
 		if (track.getType() === MediaType.VIDEO) {
@@ -28,6 +29,7 @@ function showLocalTracks(jitsiMeet: JitsiMeet) {
 		}
 
 		jitsiMeet.conference?.addTrack(jitsiMeet.localTracks[i]);
+		i++;
 	});
 }
 

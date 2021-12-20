@@ -10,65 +10,87 @@ import $ from 'jquery';
 import { JitsiMeet } from './JitsiMeet';
 
 function showLocalTracks(jitsiMeet: JitsiMeet) {
-	console.debug("addLocalTracks", "tracks:", jitsiMeet.localTracks);
+	console.debug("showLocalTracks", "tracks:", jitsiMeet.localTracks);
 
 	jitsiMeet.localTracks.forEach((track, i) => {
+		console.debug("Showing local track", i, track);
 		showTrack(track);
 		jitsiMeet.conference?.addTrack(jitsiMeet.localTracks[i]);
 	});
 }
 
 /**
-* Handles remote tracks
+* Creates a video/audio element in the UI for a given track
 * @param track JitsiTrack object
 */
 function showTrack(track: JitsiTrack) {
-	console.debug("showRemoteTrack", track);
+	console.debug("showTrack", track);
 
-	// This function is also called for local tracks. We don't want to deal with those. 
-	if (track.isLocal()) { return; }
+	let userClass: string = "local"
+	let participantId: string = "local";
+	let idx: number = 1;
 
-	const participantId: string
+	let isRemote: boolean = !track.isLocal();
+
+	if(isRemote) {
+		participantId
 		// @ts-ignore
 		= track.getParticipantId();
-	console.log("Remote track from participant:", participantId)
 
-	// Add this track to the list of known tracks if it's not already in it
-	// @ts-ignore
-	if (!jitsiMeet.remoteTracks[participantId]) {
+		// Add this track to the list of known tracks if it's not already in it
 		// @ts-ignore
-		jitsiMeet.remoteTracks[participantId] = [];
-	} // @ts-ignore
+		if (!jitsiMeet.remoteTracks[participantId]) {
+			// @ts-ignore
+			jitsiMeet.remoteTracks[participantId] = [];
+		} // @ts-ignore
 
-	const idx = jitsiMeet.remoteTracks[participantId].push(track);
+		idx = jitsiMeet.remoteTracks[participantId].push(track);
+		userClass = "user" + participantId;
+	}
 
 	let audioContainer = document.querySelector("#audios");
 	let videoContainer = document.querySelector("#videos");
 
-	let userClass = "user" + participantId;
 	let trackClass = track.getTrackId();
 
+	let el: HTMLAudioElement | HTMLVideoElement;
 	if (track.getType() === MediaType.AUDIO) {
-		let el = document.createElement("audio") as HTMLAudioElement;
+		let id = participantId + "audio" + idx;
+		
+		// FIXME: Currently gets called twice for local tracks
+		if(document.getElementById(id)) {
+			console.debug("Video element with the id", id, "already exists")
+			return;
+		}
+
+		el = document.createElement("audio") as HTMLAudioElement;
 		el.autoplay = true;
 		el.muted = false;
-		el.id = participantId + "audio" + idx
+		el.id = id;
 		el.classList.add(userClass);
 		el.classList.add(trackClass);
-		audioContainer.appendChild(el);
 
-		track.attach(document.querySelector("audio." + userClass));
+		audioContainer.appendChild(el);
+		track.attach(el);
 	} else { // Video or shared screen
-		let el = document.createElement("video") as HTMLVideoElement;
+		let id = participantId + "video" + idx;
+		el = document.createElement("video") as HTMLVideoElement;
 		el.autoplay = true;
 		el.muted = true;
-		el.id = participantId + "video" + idx
+		el.id = id;
 		el.classList.add(userClass);
 		el.classList.add(trackClass);
-		videoContainer.appendChild(el);
 
-		track.attach(document.querySelector("video." + userClass));
+		// FIXME: Currently gets called twice for local tracks
+		if(document.getElementById(id)) {
+			console.debug("Video element with the id", id, "already exists")
+			return;
+		}
+
+		videoContainer.appendChild(el);
+		track.attach(el);
 	}
+	console.debug("Attached to container", el)
 }
 
 function removeTrack(track: JitsiTrack) {

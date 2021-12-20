@@ -3,9 +3,7 @@ import JitsiMeetJS from '@lyno/lib-jitsi-meet';
 import JitsiParticipant from '@lyno/lib-jitsi-meet/dist/JitsiParticipant';
 import JitsiTrack from '@lyno/lib-jitsi-meet/dist/modules/RTC/JitsiTrack';
 import JitsiLocalTrack from '@lyno/lib-jitsi-meet/dist/modules/RTC/JitsiLocalTrack';
-import { JitsiLogLevels } from '@lyno/lib-jitsi-meet/dist/JitsiLogLevels';
 import { MediaType } from '@lyno/lib-jitsi-meet/dist/service/RTC/MediaType';
-import JitsiConnection from '@lyno/lib-jitsi-meet/JitsiConnection';
 import { JitsiConnectionEvents } from '@lyno/lib-jitsi-meet/dist/JitsiConnectionEvents';
 import { JitsiConferenceEvents } from '@lyno/lib-jitsi-meet/dist/JitsiConferenceEvents';
 
@@ -39,7 +37,7 @@ function showLocalTracks(jitsiMeet: JitsiMeet) {
 * Handles remote tracks
 * @param track JitsiTrack object
 */
-function showRemoteTrack(track: JitsiTrack) {
+function showTrack(track: JitsiTrack) {
 	console.debug("showRemoteTrack", track);
 
 	// This function is also called for local tracks. We don't want to deal with those. 
@@ -62,28 +60,24 @@ function showRemoteTrack(track: JitsiTrack) {
 	let trackClass = track.getTrackId();
 
 	if (track.getType() === MediaType.AUDIO) {
-		audioContainer.append(`<audio autoplay='1' muted='true' id='${participantId}audio${idx}' class='${userClass} ${trackClass}' /><!-- Track label: ${track.getTrackLabel()}-->`);
+		audioContainer.append(`<audio autoplay='1' muted='true' id='${participantId}audio${idx}' class='${userClass} ${trackClass}' />`);
 		track.attach(document.querySelector("audio." + userClass));
 	} else { // Video or shared screen
-		videoContainer.append(`<video autoplay='1' id='${participantId}video${idx}' class='user${participantId} ${trackClass}' /><!-- Track label: ${track.getTrackLabel()}-->`);
+		videoContainer.append(`<video autoplay='1' id='${participantId}video${idx}' class='user${participantId} ${trackClass}' />`);
 		track.attach(document.querySelector("video." + userClass));
 	}
 }
 
-function userLeft(userId: string, user: JitsiParticipant) {
-	let tracks = user.getTracks();
+function removeTrack(track: JitsiTrack) {
+	let containers: HTMLElement[]
+		// @ts-ignore // The containers property is not in the Typescript definition yet
+		= track.containers;
 
-	console.info(`user ${userId} (${user.getDisplayName()}) left, tracks:`, tracks);
+	containers.forEach(container => {
+		console.debug(`Removing track ${track.getTrackLabel()} from UI `, container)
 
-	tracks.forEach(track => {
-		let type = track.getType();
-
-		let t = type == "audio" ? "audio" : "video"; // audio is the only special case, video + desktop are both in video tags
-		let el: HTMLElement = document.querySelector(t + ".user" + userId);
-
-		console.info("detaching track", track, "from element", el);
-		track.detach(el);
-
+		track.detach(container);
+		container.remove(); // Remove from DOM
 		track.dispose();
 	});
 }
@@ -93,35 +87,48 @@ let jitsiMeet: JitsiMeet;
 async function main() {
 	// Only meet.jit.si has been found to work by default (using BOSH). Most other instances have restrictive CORS settings. 
 
-	jitsiMeet = new JitsiMeet(JitsiMeet.CONFIG_DOCKER);
+
+	// let config = JitsiMeet.CONFIG_MEET_JIT_SI; 
+	let config = JitsiMeet.CONFIG_DOCKER;
+
+	// config.connectionOptions.hosts.muc = "muc.meet.jitsi";
+	// config.connectionOptions.serviceUrl = "https://localhost:8443/http-bind";
+
+	jitsiMeet = new JitsiMeet(config);
 	// jitsiMeet = new JitsiMeet(JitsiMeet.CONFIG_MEET_JIT_SI);
 
 	// You could subscribe to connection events here, but you can also just catch the errors instead. 
 	// jitsiMeet.addEventListener(JitsiConnectionEvents.CONNECTION_ESTABLISHED, () => console.log("Connected!"));
 
+	var connectionEventListeners = new Map([
+		[JitsiConnectionEvents.CONNECTION_DISCONNECTED, () => console.log("Disconnected from the server")],
+		// [JitsiConnectionEvents.CONNECTION_ESTABLISHED, () => console.log("Connection established")], // The await would succeed
+		// [JitsiConnectionEvents.CONNECTION_FAILED, () => console.log("Connection failed")], // The await would fail
+	]);
+
 	// Returns the user's id if the connection was successful and throws an error if it was not. 
-	await jitsiMeet.connect("talentedblocksgetthis");
+	await jitsiMeet.connect("talentedblocksgetthis", connectionEventListeners);
 
 	// After this point the connection to the server is established, but the conference hasn't been joined yet. 
-	console.log("Connected!");
+	console.log("Connected to the server!");
 
-	// One category of events particularly makes sense to subscribe to here: 
-	jitsiMeet.addEventListener(JitsiConferenceEvents.CONFERENCE_JOIN_IN_PROGRESS, () => console.log("Joining conference ... "));
-	jitsiMeet.addEventListener(JitsiConferenceEvents.CONFERENCE_JOINED, () => console.log("... conference joined!"));
-	// Equivalent to:
-	// jitsiMeet.conference.addEventListener(JitsiConferenceEvents.CONFERENCE_JOINED, () => console.log("... conference joined!"));
-	// And:
-	// jitsiMeet.on(JitsiConferenceEvents.CONFERENCE_JOINED, () => console.log("... conference joined!"));
+	var conferenceEventListeners = new Map([
+		[JitsiConferenceEvents.CONFERENCE_JOIN_IN_PROGRESS, () => console.log("Joining conference ...")],
+		[JitsiConferenceEvents.CONFERENCE_JOINED, () => console.log("... conference joined")],
 
-	await jitsiMeet.joinConference();
+		// These can also be added using jitsiMeet.conference.addEventListener and removed with jitsiMeet.conference.removeEventListener
+		[JitsiConferenceEvents.USER_JOINED, (usr, user: JitsiParticipant) => console.log(`User ${usr} joined (display name: ${user.getDisplayName()}`, usr),],
+		[JitsiConferenceEvents.USER_LEFT, (usr) => console.log(`User ${usr} left`)],
+		[JitsiConferenceEvents.MESSAGE_RECEIVED, (usr: string, msg) => console.log(`Received message from user ${usr}: ${msg}`)],
+		[JitsiConferenceEvents.KICKED, () => console.log("Kicked :(")],
+
+		[JitsiConferenceEvents.TRACK_ADDED, track => showTrack(track)], // Show a new track that has been added (e.g. on user join)
+		[JitsiConferenceEvents.TRACK_REMOVED, track => removeTrack(track)], // Remove a user's UI elements when they leave
+	]);
+
+	await jitsiMeet.joinConference("TalentedBlocksGetThis", conferenceEventListeners);
 
 	// At this point the conference has been joined and the connection is all ready. 
-
-	// Let's begin caring about the UI. 
-
-	// Remote media
-	jitsiMeet.conference.on(JitsiMeetJS.events.conference.TRACK_ADDED, track => showRemoteTrack(track)); // Show a new track that has been added (e.g. on user join)
-	jitsiMeet.conference.addEventListener(JitsiConferenceEvents.USER_LEFT, (id, user) => userLeft(id, user)); // Remove a user's UI elements when they leave
 
 	// Create local media tracks
 	let tracks: JitsiLocalTrack[] = await JitsiMeetJS.createLocalTracks({ devices: ['audio', 'video'] }) as JitsiLocalTrack[];

@@ -3,14 +3,12 @@ import InitOptions from '@lyno/lib-jitsi-meet';
 import { JitsiConferenceOptions } from '@lyno/lib-jitsi-meet/dist/JitsiConnection';
 import JitsiConnection from '@lyno/lib-jitsi-meet/dist/JitsiConnection';
 import JitsiConference from '@lyno/lib-jitsi-meet/dist/JitsiConference';
-import JitsiLocalTrack from '@lyno/lib-jitsi-meet/dist/modules/RTC/JitsiLocalTrack';
 import JitsiTrack from '@lyno/lib-jitsi-meet/dist/modules/RTC/JitsiTrack';
 import JitsiRemoteTrack from '@lyno/lib-jitsi-meet/dist/modules/RTC/JitsiRemoteTrack';
 
 import { Disposable } from '@typed/disposable';
 import { JitsiConferenceEvents } from '@lyno/lib-jitsi-meet/dist/JitsiConferenceEvents';
 import { JitsiConnectionEvents } from '@lyno/lib-jitsi-meet/dist/JitsiConnectionEvents';
-import { JitsiTrackEvents } from '@lyno/lib-jitsi-meet/dist/JitsiTrackEvents';
 import { JitsiLogLevels } from '@lyno/lib-jitsi-meet/dist/JitsiLogLevels';
 
 export interface JitsiMeetOptions {
@@ -97,7 +95,7 @@ export class JitsiMeet implements Disposable {
 	 * Connect to the server. Returns the user's id if the connection was successful and throws an error if it was not. Prepares the conference. 
 	 * @param roomName The room/conference you want to join, if not configured in connectionOptions. 
 	 */
-	public async connect(roomName?: string): Promise<any> {
+	public async connect(roomName?: string, listeners?: Map<JitsiConnectionEvents, Function>): Promise<any> {
 		if(this.options?.connectionOptions?.roomName) {
 			this.options.connectionOptions.roomName = roomName;
 		}
@@ -105,14 +103,18 @@ export class JitsiMeet implements Disposable {
 		return new Promise<any>(((resolve, reject) => {
 			this.connection = new JitsiMeetJS.JitsiConnection(null, null, this.options.connectionOptions);
 
-			this.connection.addEventListener(JitsiConnectionEvents.CONNECTION_ESTABLISHED, (id) => {
-				// Pre-create the conference so it's available to bind event listeners to
-				this.conference = this.connection.initJitsiConference(this.options.connectionOptions.roomName, {});
-				resolve(id);
-			});
+			this.connection.addEventListener(JitsiConnectionEvents.CONNECTION_ESTABLISHED, (id) => resolve(id));
 
-			this.connection.addEventListener(JitsiConnectionEvents.CONNECTION_FAILED, () => {
-				reject(new Error("Connection failed :("));
+			// Errors
+			this.connection.addEventListener(JitsiConnectionEvents.CONNECTION_FAILED, (msg) => reject(new Error("CONNECTION_FAILED" + msg)));
+			this.connection.addEventListener(JitsiConnectionEvents.WRONG_STATE, (msg) => reject(new Error("WRONG_STATE" + msg)));
+			this.connection.addEventListener(JitsiConnectionEvents.DISPLAY_NAME_REQUIRED, (msg) => reject(new Error("DISPLAY_NAME_REQUIRED" + msg)));
+			// TODO: Use JitsiConnectionErrors?
+
+			// Add provided event listeners
+			listeners?.forEach((listener, event) => {
+				this.connection.addEventListener(event, listener);
+				this.eventListeners.set(listener, event);
 			});
 
 			this.connection.connect({});
@@ -122,13 +124,27 @@ export class JitsiMeet implements Disposable {
 	/**
 	* Called when the connection is established. Used for setup. 
 	*/
-	public async joinConference(): Promise<any> {
+	public async joinConference(roomId: string, listeners: Map<JitsiConferenceEvents, Function>): Promise<any> {
 		return new Promise<any>(((resolve, reject) => {
+			this.conference = this.connection.initJitsiConference(this.options.connectionOptions.roomName, {});
+
 			console.debug("connected", "Connection:", this.connection, "Conference:", this.conference);
 			console.info("Connection succeeded!");
 
-			this.conference.on(JitsiMeetJS.events.conference.CONFERENCE_JOINED, () => this.conferenceJoined());
-			this.conference.on(JitsiMeetJS.events.conference.CONFERENCE_JOINED, () => resolve(null));
+			this.conference.addEventListener(JitsiConferenceEvents.CONFERENCE_JOINED, () => this.conferenceJoined());
+			this.conference.addEventListener(JitsiConferenceEvents.CONFERENCE_JOINED, () => resolve(null));
+
+			// Errors
+			this.conference.on(JitsiConferenceEvents.CONNECTION_INTERRUPTED, () => reject(JitsiConferenceEvents.CONNECTION_INTERRUPTED));
+			this.conference.on(JitsiConferenceEvents.CONFERENCE_FAILED, () => reject(JitsiConferenceEvents.CONNECTION_INTERRUPTED));
+			this.conference.on(JitsiConferenceEvents.CONNECTION_INTERRUPTED, () => reject(JitsiConferenceEvents.CONNECTION_INTERRUPTED));
+			// TODO: Use JitsiConferenceErrors?
+
+			// Add provided event listeners
+			listeners?.forEach((listener, event: JitsiConferenceEvents) => {
+				this.conference.addEventListener(event, listener);
+				this.eventListeners.set(listener, event);
+			});
 
 			this.conference.join(null, null);
 		}));
@@ -146,53 +162,6 @@ export class JitsiMeet implements Disposable {
 		for (let i = 0; i < this.localTracks.length; i++) {
 			this.conference.addTrack(this.localTracks[i]);
 		}
-	}
-
-	/**
-	 * Adds an event listener of the type JitsiConnectionEvents,  JitsiConferenceEvents or JitsiTrackEvents. For JitsiTrackEvents the listener is added for each local track. 
-	 * Make sure to pass your listener using a closure (() => object.method()) to preserve the value of `this`. 
-	 * @param ev 
-	 */
-	public addEventListener(event: JitsiConnectionEvents | JitsiConferenceEvents | JitsiTrackEvents, listener: () => void): void {
-		JitsiMeetJS.events.connection;
-
-		if (!listener) {
-			throw new Error("No listener was provided");
-		}
-
-		if (event.startsWith("connection.")) {
-			console.debug("Adding listener for connection event", event);
-			if (!this.connection) {
-				throw new Error("The connection hasn't been created yet!");
-			}
-			this.connection.addEventListener(event, listener);
-			this.eventListeners.set(listener, event as JitsiConnectionEvents);
-
-		} else if (event.startsWith("conference.")) {
-			if (!this.conference) {
-				throw new Error("The conference hasn't been created yet!");
-			}
-			console.debug("Adding listener for conference event", event);
-			this.conference.addEventListener(event, listener);
-			this.eventListeners.set(listener, event as JitsiConferenceEvents);
-
-		} else if (event.startsWith("track.")) {
-
-			console.debug("Adding listener for track event (to all local tracks)", event);
-			this.localTracks.forEach((track: JitsiLocalTrack) => {
-				track.addEventListener(event, listener);
-			});
-			// Doesn't need to be added to the list as it can't be removed anyway
-		} else {
-			throw new Error("Unknown event!");
-		}
-	}
-
-	/**
-	 * Alias for addEventListener
-	 */
-	public on(event: JitsiConnectionEvents | JitsiConferenceEvents | JitsiTrackEvents, listener: (...args: any[]) => void): void {
-		this.addEventListener(event, listener);
 	}
 
 	/**

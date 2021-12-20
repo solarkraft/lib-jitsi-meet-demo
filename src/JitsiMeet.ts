@@ -114,6 +114,8 @@ export class JitsiMeet implements Disposable {
 	 */
 	public async joinConference(name: string, listeners?: Map<JitsiConferenceEvents, Function>): Promise<boolean> {
 		// TODO: Cancel other already running joinConference()s
+		if(!this.connection) { console.info("joinConference has been called without an existing connection, doing nothing"); return; }
+
 		console.debug("joinConference");
 		if (name && this.options?.connectionOptions?.roomName) {
 			console.warn(`Room name overridden by options.connectionOptions.roomName (${this.options.connectionOptions.roomName} instead of ${name}). You should only set one. `);

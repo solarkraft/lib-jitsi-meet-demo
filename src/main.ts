@@ -98,7 +98,6 @@ async function main() {
 	// config.connectionOptions.serviceUrl = "https://localhost:8443/http-bind";
 
 	jitsiMeet = new JitsiMeet(config);
-	// jitsiMeet = new JitsiMeet(JitsiMeet.CONFIG_MEET_JIT_SI);
 
 	// You could subscribe to connection events here, but you can also just catch the errors instead. 
 	// jitsiMeet.addEventListener(JitsiConnectionEvents.CONNECTION_ESTABLISHED, () => console.log("Connected!"));
@@ -152,4 +151,4 @@ async function main() {
 	window.JitsiMeetJS = JitsiMeetJS; // useful in REPL
 }
 
-main().catch((e) => {alert(e); console.log(e)});
+main().catch((e) => { alert(e); console.log(e) });

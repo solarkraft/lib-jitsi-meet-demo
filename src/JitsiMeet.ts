@@ -14,16 +14,13 @@ import { JitsiConferenceErrors } from '@lyno/lib-jitsi-meet/dist/JitsiConference
 import { JitsiConnectionErrors } from '@lyno/lib-jitsi-meet/dist/JitsiConnectionErrors';
 
 export interface JitsiMeetOptions {
-    hosts?: any;
+	hosts?: any;
 	logLevel?: JitsiLogLevels;
 	roomName?: string;
 
 	// These can be used to override the friendly configuration options
 	connectionOptions?: typeof InitOptions | any;
 	conferenceOptions?: JitsiConferenceOptions | any;
-
-    init?: Function;
-
 }
 
 export class JitsiMeet implements Disposable {
@@ -39,7 +36,7 @@ export class JitsiMeet implements Disposable {
 	/**
 	 * Configuration for the public meet.jit.si instance. It only works via BOSH because the WebSockets connections are CORS-restricted. 
 	 */
-	 public static get CONFIG_MEET_JIT_SI(): JitsiMeetOptions {
+	public static get CONFIG_MEET_JIT_SI(): JitsiMeetOptions {
 		return {
 			logLevel: JitsiLogLevels.WARN,
 			connectionOptions: {
@@ -52,7 +49,7 @@ export class JitsiMeet implements Disposable {
 				// as the host or the host to have cross_domain_websocket enabled (due to CORS). The properties bosh and websockets are deprecated in favor of this format. 
 				// The value of the query parameter doesn't seem to have any effect, however it is set by the official client. 
 				baseServiceUrl: "https://meet.jit.si/http-bind?room=",
-				get serviceUrl() { return this.baseServiceUrl+this.roomName.toLowerCase(); },
+				get serviceUrl() { return this.baseServiceUrl + this.roomName.toLowerCase(); },
 				deploymentInfo: {}, // Gets rid of an error when Strophe tries to add properties (only seen on meet.jit.si)
 			}
 		}
@@ -61,7 +58,7 @@ export class JitsiMeet implements Disposable {
 	/**
 	 * Configuration for a docker installation (https://github.com/jitsi/docker-jitsi-meet) running on localhost with default values
 	 */
-	 public static get CONFIG_DOCKER(): JitsiMeetOptions {
+	public static get CONFIG_DOCKER(): JitsiMeetOptions {
 		return {
 			logLevel: JitsiLogLevels.WARN,
 			connectionOptions: {
@@ -95,9 +92,10 @@ export class JitsiMeet implements Disposable {
 		return new Promise<any>(((resolve, reject) => {
 			this.connection = new JitsiMeetJS.JitsiConnection(null, null, this.options.connectionOptions);
 
+			// Success
 			this.connection.addEventListener(JitsiConnectionEvents.CONNECTION_ESTABLISHED, (id) => resolve(id));
 
-			// Errors
+			// Failure
 			this.connection.addEventListener(JitsiConnectionEvents.CONNECTION_FAILED, (e: JitsiConnectionErrors) => reject(new Error(e)));
 			this.connection.addEventListener(JitsiConnectionEvents.WRONG_STATE, (e: JitsiConnectionErrors) => reject(new Error(e)));
 			this.connection.addEventListener(JitsiConnectionEvents.DISPLAY_NAME_REQUIRED, (e: JitsiConnectionErrors) => reject(new Error(e)));
@@ -113,7 +111,7 @@ export class JitsiMeet implements Disposable {
 	* Called when the connection is established. Used for setup. 
 	*/
 	public async joinConference(name: string, listeners: Map<JitsiConferenceEvents, Function>): Promise<any> {
-		if(name && this.options?.connectionOptions?.roomName) {
+		if (name && this.options?.connectionOptions?.roomName) {
 			console.warn(`Room name overridden by options.connectionOptions.roomName (${this.options.connectionOptions.roomName} instead of ${name}). You should only set one. `);
 			name = this.options.connectionOptions.roomName;
 		}
@@ -123,10 +121,11 @@ export class JitsiMeet implements Disposable {
 			console.debug("connected", "Connection:", this.connection, "Conference:", this.conference);
 			console.info("Connection succeeded!");
 
+			// Success
 			this.conference.addEventListener(JitsiConferenceEvents.CONFERENCE_JOINED, () => this.conferenceJoined());
-			this.conference.addEventListener(JitsiConferenceEvents.CONFERENCE_JOINED, () => resolve(null));
+			this.conference.addEventListener(JitsiConferenceEvents.CONFERENCE_JOINED, () => resolve(undefined));
 
-			// Errors
+			// Failure
 			this.conference.on(JitsiConferenceEvents.CONNECTION_INTERRUPTED, (e: JitsiConferenceErrors) => reject(new Error(e)));
 			this.conference.on(JitsiConferenceEvents.CONFERENCE_FAILED, (e: JitsiConferenceErrors) => reject(new Error(e)));
 

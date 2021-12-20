@@ -135,11 +135,11 @@ async function main() {
 
 	let roomName = "TalentedBlocksGetThis";
 
-	// let config = JitsiMeet.CONFIG_MEET_JIT_SI;
+	let config = JitsiMeet.CONFIG_MEET_JIT_SI;
 	// Because the public Jitsi Meet instance does extra routing on connection based on the room name, it needs to be supplied earlier than ususal.
-	// config.connectionOptions.roomName = roomName; // This property overrides the room name used on joinConference(). Setting both produces a warning. 
+	config.connectionOptions.roomName = roomName; // This property overrides the room name used on joinConference(). Setting both produces a warning. 
 
-	let config = JitsiMeet.CONFIG_DOCKER;
+	// let config = JitsiMeet.CONFIG_DOCKER;
 	// Main address. wss://<your server>/xmpp-websocket for WebSocket or https://<your server>/http-bind for BOSH (WebSocket preferred)
 	// config.connectionOptions.serviceUrl = "wss://localhost:8443/xmpp-websocket";
 	// config.connectionOptions.serviceUrl = "https://localhost:8443/http-bind";

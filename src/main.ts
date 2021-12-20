@@ -27,9 +27,7 @@ function showLocalTracks(jitsiMeet: JitsiMeet) {
 			track.attach($(`#localDesktop${i}`)[0]);
 		}
 
-		if (jitsiMeet.isJoined) {
-			jitsiMeet.conference.addTrack(jitsiMeet.localTracks[i]);
-		}
+		jitsiMeet.conference?.addTrack(jitsiMeet.localTracks[i]);
 	});
 }
 

@@ -29,7 +29,6 @@ export class JitsiMeet implements Disposable {
 
 	public localTracks: JitsiTrack[] = [];
 	public remoteTracks: JitsiRemoteTrack[] = [];
-	public isJoined: boolean = false;
 
 	private options: JitsiMeetOptions = {};
 
@@ -146,7 +145,6 @@ export class JitsiMeet implements Disposable {
 
 		console.info(`Conference ${this.conference.options.name} joined`);
 
-		this.isJoined = true;
 		for (let i = 0; i < this.localTracks.length; i++) {
 			this.conference.addTrack(this.localTracks[i]);
 		}

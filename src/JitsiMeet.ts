@@ -207,6 +207,9 @@ export class JitsiMeet implements Disposable {
 	public async disconnect() {
 		await this.leaveConference();
 		this.connection?.disconnect();
+
+		this.conference = null;
+		this.connection = null;
 	}
 
 	public dispose(): void {

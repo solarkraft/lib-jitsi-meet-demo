@@ -32,8 +32,6 @@ export class JitsiMeet implements Disposable {
 	public remoteTracks: JitsiRemoteTrack[] = [];
 	public isJoined: boolean = false;
 
-	// Kept to facilitate cleanup on dispose(). May not be strictly necessary. 
-	private eventListeners = new Map<Function, JitsiConnectionEvents | JitsiConferenceEvents>();
 	private options: JitsiMeetOptions = {};
 
 	/**
@@ -112,10 +110,7 @@ export class JitsiMeet implements Disposable {
 			// TODO: Use JitsiConnectionErrors?
 
 			// Add provided event listeners
-			listeners?.forEach((listener, event) => {
-				this.connection.addEventListener(event, listener);
-				this.eventListeners.set(listener, event);
-			});
+			listeners?.forEach((listener, event) => this.connection.addEventListener(event, listener));
 
 			this.connection.connect({});
 		}));
@@ -143,7 +138,6 @@ export class JitsiMeet implements Disposable {
 			// Add provided event listeners
 			listeners?.forEach((listener, event: JitsiConferenceEvents) => {
 				this.conference.addEventListener(event, listener);
-				this.eventListeners.set(listener, event);
 			});
 
 			this.conference.join(null, null);
@@ -164,25 +158,6 @@ export class JitsiMeet implements Disposable {
 		}
 	}
 
-	/**
-	 * Removes an event listener that was previously added using addEventListener(). 
-	 * @param listener 
-	 * @param event 
-	 */
-	public removeEventListener(listener: Function, event: JitsiConnectionEvents | JitsiConferenceEvents): void {
-		if (event.startsWith("connection.")) {
-			console.debug("Removing listener for connection event", event);
-			this.connection.removeEventListener(event, listener);
-
-		} else if (event.startsWith("conference.")) {
-			console.debug("Removing listener for conference event ....", event);
-			this.conference.removeEventListener(event, listener);
-		}
-
-		// Remove listener from Map
-		this.eventListeners.delete(listener)
-	}
-
 	public dispose(): void {
 		this.unload();
 		this.localTracks.forEach(track => {
@@ -190,19 +165,6 @@ export class JitsiMeet implements Disposable {
 		});
 		this.remoteTracks.forEach(track => {
 			track.dispose()
-		});
-		this.removeAllEventListeners();
-	}
-
-	/**
-	 * Removes all registered event listeners. Used in dispose(). 
-	 */
-	private removeAllEventListeners() {
-		console.info("Removing all event listeners");
-
-		this.eventListeners.forEach((event, listener) => {
-			console.info(`Removing listener ${listener} for event ${event}`);
-			this.removeEventListener(listener, event);
 		});
 	}
 

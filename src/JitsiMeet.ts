@@ -15,13 +15,13 @@ import { JitsiConferenceErrors } from '@lyno/lib-jitsi-meet/dist/JitsiConference
 export interface JitsiMeetOptions {
 	logLevel?: JitsiLogLevels;
 	connectionOptions?: InitOptions | any;
-	conferenceOptions?: JitsiConferenceOptions | any;
+	conferenceOptions?: JitsiConferenceOptions;
 	trackOptions?: CreateLocalTracksOptions
 }
 
 export class JitsiMeet implements Disposable {
-	public connection: JitsiConnection | any;
-	public conference: JitsiConference | any;
+	public connection: JitsiConnection;
+	public conference: JitsiConference;
 
 	public localTracks: JitsiLocalTrack[] = [];
 	public remoteTracks: JitsiRemoteTrack[] = [];
@@ -86,12 +86,12 @@ export class JitsiMeet implements Disposable {
 	 * Connect to the server. Returns the user's id if the connection was successful and throws an error if it was not. Prepares the conference. 
 	 * @param roomName The room/conference you want to join, if not configured in connectionOptions. 
 	 */
-	public async connect(listeners?: Map<JitsiConnectionEvents, Function>): Promise<any> {
-		return new Promise<any>(((resolve, reject) => {
+	public async connect(listeners?: Map<JitsiConnectionEvents, Function>): Promise<string> {
+		return new Promise<string>(((resolve, reject) => {
 			this.connection = new JitsiMeetJS.JitsiConnection(null, null, this.options.connectionOptions);
 
 			// Success
-			this.connection.addEventListener(JitsiConnectionEvents.CONNECTION_ESTABLISHED, (id) => resolve(id));
+			this.connection.addEventListener(JitsiConnectionEvents.CONNECTION_ESTABLISHED, (id: string) => resolve(id));
 
 			// Failure
 			this.connection.addEventListener(JitsiConnectionEvents.CONNECTION_FAILED, (e: JitsiConnectionErrors) => reject(new Error(e)));
@@ -112,13 +112,13 @@ export class JitsiMeet implements Disposable {
 	 * @param listeners Listeners for events on the conference to add before the conference is joined. If this parameter is not provided, there will be an attempt to use eventListeners from the previous run. 
 	 * @returns true if a new conference was joined, false if the method was aborted due to already being in that conference. 
 	 */
-	public async joinConference(name: string, listeners?: Map<JitsiConferenceEvents, Function>): Promise<any> {
+	public async joinConference(name: string, listeners?: Map<JitsiConferenceEvents, Function>): Promise<boolean> {
 		console.debug("joinConference");
 		if (name && this.options?.connectionOptions?.roomName) {
 			console.warn(`Room name overridden by options.connectionOptions.roomName (${this.options.connectionOptions.roomName} instead of ${name}). You should only set one. `);
 			name = this.options.connectionOptions.roomName;
 		}
-		return new Promise<any>(async (resolve, reject) => {
+		return new Promise<boolean>(async (resolve, reject) => {
 			// Event listener preservation in case joinConference is called again without the listeners parameter
 			if (listeners) {
 				this.conferenceEventListeners = listeners;
@@ -166,9 +166,9 @@ export class JitsiMeet implements Disposable {
 	 * @param listeners Event listeners to add before the conference is left
 	 * @returns true if the conference was left, false if there is no conference to leave
 	 */
-	public async leaveConference(listeners?: Map<JitsiConferenceEvents, Function>): Promise<any> {
+	public async leaveConference(listeners?: Map<JitsiConferenceEvents, Function>): Promise<boolean> {
 		console.info("leaveConference");
-		return new Promise<any>(async (resolve, reject) => {
+		return new Promise<boolean>(async (resolve, reject) => {
 			if (!this.conference?.isJoined()) {
 				console.debug("No conference joined to leave");
 				resolve(false);
@@ -190,16 +190,16 @@ export class JitsiMeet implements Disposable {
 	 * @param options CreateLocalTracksOptions
 	 * @returns true
 	 */
-	 public async createLocalTracks(options?: CreateLocalTracksOptions): Promise<any> {
+	 public async createLocalTracks(options?: CreateLocalTracksOptions): Promise<void> {
 		let tracksOptions = options || this.options.trackOptions || { devices: ['audio', 'video'] };
 
-		return new Promise<any>(async (resolve, reject) => {
+		return new Promise<void>(async (resolve, reject) => {
 			console.debug("Creating local tracks", this.conference)
 			let tracks: JitsiLocalTrack[] = await JitsiMeetJS.createLocalTracks(tracksOptions) as JitsiLocalTrack[];
 			console.debug("Tracks:", tracks);
 
 			this.localTracks = tracks;
-			resolve(true);
+			resolve();
 		});
 	}
 

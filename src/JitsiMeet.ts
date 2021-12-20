@@ -46,7 +46,7 @@ export interface ConnectionOptions {
 
 export interface JitsiMeetOptions {
 	logLevel?: JitsiLogLevels;
-	initOptions?: InitOptions;
+	initOptions?: InitOptions | any;
 	connectionOptions?: ConnectionOptions;
 	conferenceOptions?: JitsiConferenceOptions;
 	trackOptions?: CreateLocalTracksOptions
@@ -215,7 +215,7 @@ export class JitsiMeet implements Disposable {
 	 * @param listeners Event listeners to add before the conference is left
 	 * @returns true if the conference was left, false if there is no conference to leave
 	 */
-	public async leaveConference(listeners?: Map<JitsiConferenceEvents, Function>): Promise<boolean> {
+	public async leaveConference(): Promise<boolean> {
 		console.info("leaveConference");
 		return new Promise<boolean>(async (resolve) => {
 			if (!this.conference?.isJoined()) {
@@ -239,7 +239,6 @@ export class JitsiMeet implements Disposable {
 	 * Create local tracks (audio/video/desktop) and add them to the current conference. 
 	 * Will take provided CreateLocalTracksOptions, the value from options.trackOptions or a default value (audio and video). 
 	 * @param options CreateLocalTracksOptions
-	 * @returns true
 	 */
 	public async createLocalTracks(options?: CreateLocalTracksOptions): Promise<void> {
 		let tracksOptions = options || this.options.trackOptions || { devices: ['audio', 'video'] };
@@ -258,9 +257,7 @@ export class JitsiMeet implements Disposable {
 		});
 	}
 
-	/** 
-	 * Leave the current conference and disconnect from the server
-	 */
+	/** Leave the current conference and disconnect from the server */
 	public async disconnect() {
 		await this.leaveConference();
 		this.connection?.disconnect();

@@ -96,17 +96,24 @@ export class JitsiMeet implements Disposable {
 	}
 
 	/**
-	 * 
-	 * @param options Configure the options for the connection. Either as ConnectionOptions or a JitsiMeetJS connection options object. 
-	 * @returns 
+	 * Connect to the server. Returns the user's id if the connection was successful and throws an error if it was not. Prepares the conference. 
+	 * @param roomName The room/conference you want to join, if not configured in connectionOptions. 
 	 */
-	public async connect(options?: JitsiMeetOptions): Promise<any> {
+	public async connect(roomName?: string): Promise<any> {
+		if(this.options?.connectionOptions?.roomName) {
+			this.options.connectionOptions.roomName = roomName;
+		}
+
 		return new Promise<any>(((resolve, reject) => {
 			this.connection = new JitsiMeetJS.JitsiConnection(null, null, this.options.connectionOptions);
 
 			this.connection.addEventListener(JitsiConnectionEvents.CONNECTION_ESTABLISHED, (id) => {
 				this.conference = this.connection.initJitsiConference(this.options.connectionOptions.roomName, {});
-				resolve({ id });
+				resolve(id);
+			});
+
+			this.connection.addEventListener(JitsiConnectionEvents.CONNECTION_FAILED, () => {
+				reject(new Error("Connection failed :("));
 			});
 
 			this.connection.connect({});

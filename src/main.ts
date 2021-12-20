@@ -96,18 +96,11 @@ async function main() {
 	jitsiMeet = new JitsiMeet(JitsiMeet.CONFIG_DOCKER);
 	// jitsiMeet = new JitsiMeet(JitsiMeet.CONFIG_MEET_JIT_SI);
 
-	let connection: JitsiConnection = jitsiMeet.connection;
+	// Returns the user's id if the connection was successful and throws an error if it was not. 
+	await jitsiMeet.connect("talentedblocksgetthis");
 
-	// Here we can subscribe to events for the connection
-	jitsiMeet.on(JitsiConnectionEvents.CONNECTION_ESTABLISHED, () => console.log("Connection established!"));
-	jitsiMeet.on(JitsiConnectionEvents.CONNECTION_FAILED, () => console.error("Connection failed :("));
-	jitsiMeet.on(JitsiConnectionEvents.CONNECTION_DISCONNECTED, () => console.log("Disconnected"));
-
-	await jitsiMeet.connect();
 	// After this point the connection to the server is established, but the conference hasn't been joined yet. 
-
-	// Subscribing to the connection events here doesn't make much sense. 
-	jitsiMeet.on(JitsiConnectionEvents.CONNECTION_ESTABLISHED, () => console.log("Connected, but at what cost?")); // You're going to miss the first event because it's what triggers this code. 
+	console.log("Connected!");
 
 	// Todo: Fix event listeners
 	// One category of events particularly makes sense to subscribe to here: (these don't work yet for some reason)
@@ -146,4 +139,5 @@ async function main() {
 	// @ts-ignore
 	window.JitsiMeetJS = JitsiMeetJS; // useful in REPL
 }
-main();
+
+main().catch((e) => {alert(e); console.log(e)});

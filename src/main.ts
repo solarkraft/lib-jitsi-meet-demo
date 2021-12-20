@@ -12,24 +12,9 @@ import { JitsiMeet } from './JitsiMeet';
 function showLocalTracks(jitsiMeet: JitsiMeet) {
 	console.debug("addLocalTracks", "tracks:", jitsiMeet.localTracks);
 
-	let i = 0;
-	jitsiMeet.localTracks.forEach((track) => {
-		// Add tracks to body
-		console.log("Showing track", track);
-		if (track.getType() === MediaType.VIDEO) {
-			$('body').append(`<video autoplay='1' id='localVideo${i}' class='local ${i}' />`);
-			track.attach($(`#localVideo${i}`)[0]);
-		} else if (track.getType() === MediaType.AUDIO) {
-			$('body').append(`<audio autoplay='1' muted='false' id='localAudio${i}' class='local ${i}' />`);
-			track.attach($(`#localAudio${i}`)[0]);
-			// @ts-ignore
-		} else if (track.getType() === 'desktop') {
-			$('body').append(`<video autoplay='1' id='localDesktop${i}' class='local ${i}'/>`);
-			track.attach($(`#localDesktop${i}`)[0]);
-		}
-
+	jitsiMeet.localTracks.forEach((track, i) => {
+		showTrack(track);
 		jitsiMeet.conference?.addTrack(jitsiMeet.localTracks[i]);
-		i++;
 	});
 }
 
@@ -54,19 +39,34 @@ function showTrack(track: JitsiTrack) {
 		// @ts-ignore
 		jitsiMeet.remoteTracks[participantId] = [];
 	} // @ts-ignore
+
 	const idx = jitsiMeet.remoteTracks[participantId].push(track);
 
-	let audioContainer = $("body");
-	let videoContainer = $("body");
+	let audioContainer = document.querySelector("#audios");
+	let videoContainer = document.querySelector("#videos");
 
 	let userClass = "user" + participantId;
 	let trackClass = track.getTrackId();
 
 	if (track.getType() === MediaType.AUDIO) {
-		audioContainer.append(`<audio autoplay='1' muted='true' id='${participantId}audio${idx}' class='${userClass} ${trackClass}' />`);
+		let el = document.createElement("audio") as HTMLAudioElement;
+		el.autoplay = true;
+		el.muted = true;
+		el.id = participantId + "audio" + idx
+		el.classList.add(userClass);
+		el.classList.add(trackClass);
+		audioContainer.appendChild(el);
+
 		track.attach(document.querySelector("audio." + userClass));
 	} else { // Video or shared screen
-		videoContainer.append(`<video autoplay='1' id='${participantId}video${idx}' class='user${participantId} ${trackClass}' />`);
+		let el = document.createElement("video") as HTMLVideoElement;
+		el.autoplay = true;
+		el.muted = true;
+		el.id = participantId + "video" + idx
+		el.classList.add(userClass);
+		el.classList.add(trackClass);
+		videoContainer.appendChild(el);
+
 		track.attach(document.querySelector("video." + userClass));
 	}
 }

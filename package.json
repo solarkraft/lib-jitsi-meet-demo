@@ -1,6 +1,6 @@
 {
 	"name": "lib-jitsi-meet-demo",
-	"version": "0.5",
+	"version": "0.5.1",
 	"description": "",
 	"main": "webpack.config.js",
 	"scripts": {

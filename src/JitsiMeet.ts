@@ -73,9 +73,7 @@ export class JitsiMeet implements Disposable {
 		}
 	}
 
-	constructor(
-		options: JitsiMeetOptions
-	) {
+	constructor(options: JitsiMeetOptions) {
 		this.options = options;
 
 		// Initialize

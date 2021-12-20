@@ -1,4 +1,4 @@
-import JitsiMeetJS from '@lyno/lib-jitsi-meet';
+import JitsiMeetJS, { CreateLocalTracksOptions } from '@lyno/lib-jitsi-meet';
 import InitOptions from '@lyno/lib-jitsi-meet';
 import { JitsiConferenceOptions } from '@lyno/lib-jitsi-meet/dist/JitsiConnection';
 import JitsiConnection from '@lyno/lib-jitsi-meet/dist/JitsiConnection';
@@ -12,11 +12,14 @@ import { JitsiConnectionEvents } from '@lyno/lib-jitsi-meet/dist/JitsiConnection
 import { JitsiLogLevels } from '@lyno/lib-jitsi-meet/dist/JitsiLogLevels';
 import { JitsiConferenceErrors } from '@lyno/lib-jitsi-meet/dist/JitsiConferenceErrors';
 import { JitsiConnectionErrors } from '@lyno/lib-jitsi-meet/dist/JitsiConnectionErrors';
+import JitsiLocalTrack from '@lyno/lib-jitsi-meet/dist/modules/RTC/JitsiLocalTrack';
+import { config } from 'webpack';
 
 export interface JitsiMeetOptions {
 	logLevel?: JitsiLogLevels;
 	connectionOptions?: typeof InitOptions | any;
 	conferenceOptions?: JitsiConferenceOptions | any;
+	trackOptions?: CreateLocalTracksOptions
 }
 
 export class JitsiMeet implements Disposable {
@@ -184,6 +187,24 @@ export class JitsiMeet implements Disposable {
 
 			this.conference.leave();
 			this.conference = null;
+		});
+	}
+
+	/** Create local tracks (audio/video/desktop) and add them to the current conference. 
+	 * Will take provided CreateLocalTracksOptions, the value from options.trackOptions or a default value (audio and video). 
+	 * @param options CreateLocalTracksOptions
+	 * @returns true
+	 */
+	 public async createLocalTracks(options?: CreateLocalTracksOptions): Promise<any> {
+		let tracksOptions = options || this.options.trackOptions || { devices: ['audio', 'video'] };
+
+		return new Promise<any>(async (resolve, reject) => {
+			console.debug("Creating local tracks", this.conference)
+			let tracks: JitsiLocalTrack[] = await JitsiMeetJS.createLocalTracks(tracksOptions) as JitsiLocalTrack[];
+			console.debug("Tracks:", tracks);
+
+			this.localTracks = tracks;
+			resolve(true);
 		});
 	}
 

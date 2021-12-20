@@ -2,7 +2,6 @@
 import JitsiMeetJS from '@lyno/lib-jitsi-meet';
 import JitsiParticipant from '@lyno/lib-jitsi-meet/dist/JitsiParticipant';
 import JitsiTrack from '@lyno/lib-jitsi-meet/dist/modules/RTC/JitsiTrack';
-import JitsiLocalTrack from '@lyno/lib-jitsi-meet/dist/modules/RTC/JitsiLocalTrack';
 import { MediaType } from '@lyno/lib-jitsi-meet/dist/service/RTC/MediaType';
 import { JitsiConnectionEvents } from '@lyno/lib-jitsi-meet/dist/JitsiConnectionEvents';
 import { JitsiConferenceEvents } from '@lyno/lib-jitsi-meet/dist/JitsiConferenceEvents';
@@ -107,7 +106,7 @@ async function main() {
 		// [JitsiConnectionEvents.CONNECTION_ESTABLISHED, () => console.log("Connection established")], // The await would succeed
 		// [JitsiConnectionEvents.CONNECTION_FAILED, () => console.log("Connection failed")], // The await would fail
 	]);
-
+	
 	// Returns the user's id if the connection was successful and throws an error if it was not. 
 	await jitsiMeet.connect(connectionEventListeners);
 
@@ -127,18 +126,13 @@ async function main() {
 		[JitsiConferenceEvents.TRACK_ADDED, track => showTrack(track)], // Show a new track that has been added (e.g. on user join)
 		[JitsiConferenceEvents.TRACK_REMOVED, track => removeTrack(track)], // Remove a user's UI elements when they leave
 
-		[JitsiConferenceEvents.CONFERENCE_JOIN_IN_PROGRESS, async () => {
+		[JitsiConferenceEvents.CONFERENCE_JOINED, async () => {
 			// Create local media tracks
-
-			console.log("Creating local tracks")
-			let tracks: JitsiLocalTrack[] = await JitsiMeetJS.createLocalTracks({ devices: ['audio', 'video'] }) as JitsiLocalTrack[];
-
-			// Add them to the jitsi meet object
-			jitsiMeet.localTracks = tracks; // TODO: These tracks are barely used by Jitsi Meet, plus local and remote tracks are often handled together. Might want to unify. 
+			await jitsiMeet.createLocalTracks();
 
 			// Display the local media tracks
 			showLocalTracks(jitsiMeet);
-		}], // Remove a user's UI elements when they leave
+		}],
 
 	]);
 

@@ -170,7 +170,6 @@ export class JitsiMeet implements Disposable {
 	 * @returns true if the conference was left, false if there is no conference to leave
 	 */
 	public async leaveConference(listeners?: Map<JitsiConferenceEvents, Function>): Promise<any> {
-		// TODO: Fix memory leak
 		console.info("leaveConference");
 		return new Promise<any>(async (resolve, reject) => {
 			if (!this.conference?.isJoined()) {
@@ -188,6 +187,9 @@ export class JitsiMeet implements Disposable {
 
 			this.conference.leave();
 			this.conference = null;
+
+			// This is against a bug in JitsiMeetJS causing a memory leak (Possible EventEmitter memory leak detected. 11 xmpp.speaker_stats_received listeners added)
+			this.connection.xmpp.eventEmitter.removeAllListeners("xmpp.speaker_stats_received");
 		});
 	}
 

@@ -14,9 +14,16 @@ import { JitsiTrackEvents } from '@lyno/lib-jitsi-meet/dist/JitsiTrackEvents';
 import { JitsiLogLevels } from '@lyno/lib-jitsi-meet/dist/JitsiLogLevels';
 
 export interface JitsiMeetOptions {
-	connectionOptions?: typeof InitOptions | any,
-	conferenceOptions?: JitsiConferenceOptions | any,
-	logLevel?: JitsiLogLevels,
+    hosts?: any;
+	logLevel?: JitsiLogLevels;
+	roomName?: string;
+
+	// These can be used to override the friendly configuration options
+	connectionOptions?: typeof InitOptions | any;
+	conferenceOptions?: JitsiConferenceOptions | any;
+
+    init?: Function;
+
 }
 
 export class JitsiMeet implements Disposable {
@@ -27,78 +34,69 @@ export class JitsiMeet implements Disposable {
 	public remoteTracks: JitsiRemoteTrack[] = [];
 	public isJoined: boolean = false;
 
-	readonly host: string; /** The host's domain name. Example: meet.jit.si */
-	readonly roomId: string;
-
-	private eventListeners = new Map<Function, JitsiConnectionEvents | JitsiConferenceEvents>(); // Kept to facilitate cleanup on dispose()
+	// Kept to facilitate cleanup on dispose(). May not be strictly necessary. 
+	private eventListeners = new Map<Function, JitsiConnectionEvents | JitsiConferenceEvents>();
 	private options: JitsiMeetOptions = {};
 
-	constructor(
-		host: string = "meet.jit.si",
-		roomId: string = "TownHall",
-		userOptions?: JitsiMeetOptions,
-	) {
-		this.host = host.toLowerCase();
-		this.roomId = roomId.toLowerCase();
-
-		// This has only been tested with meet.jit.si. Other installations may be configured differently. 
-		// this.options.connectionOptions = {
-		// 	hosts: {
-		// 		domain: this.host,
-		// 		// muc: `conference.${this.host}`,
-		// 		//muc: this.host, // if this is wrong, the connection fails with Strophe: BOSH-Connection failed: improper-addressing
-		// 		muc: "meet.jitsi",
-		// 	},
-		// 	// Can either be a WebSockets (wss://...) or BOSH (.../http-bind) URL. WebSockets are generally preferable, but require the client to run on the same domain
-		// 	// as the host or the host to have cross_domain_websocket enabled (due to CORS). The properties bosh and websockets are deprecated in favor of this format. 
-		// 	serviceUrl: `https://${this.host}/http-bind?room=${this.roomId}`,
-
-		// 	deploymentInfo: {}, // Gets rid of a type error
-
-		// 	// Not strictly necessary
-		// 	enableWindowOnErrorHandler: true,
-		// 	disableThirdPartyRequests: true,
-		// };
-
-
-		// Version for local host (docker)
-		this.options.connectionOptions = {
-			hosts: {
-				domain: this.host,
-				// muc: `conference.${this.host}`,
-				//muc: this.host, // if this is wrong, the connection fails with Strophe: BOSH-Connection failed: improper-addressing
-				muc: "muc.meet.jitsi", 
-				anonymousdomain: "meet.jitsi", // internal domain. meet.jitsi by default (docker). used for something something initial connection
-				focus: "focus.meet.jitsi", 
-			},
-			// Can either be a WebSockets (wss://...) or BOSH (.../http-bind) URL. WebSockets are generally preferable, but require the client to run on the same domain
-			// as the host or the host to have cross_domain_websocket enabled (due to CORS). The properties bosh and websockets are deprecated in favor of this format. 
-			serviceUrl: `https://${this.host}/http-bind?room=${this.roomId}`,
-
-			deploymentInfo: {}, // Gets rid of a type error
-
-			// Not strictly necessary
-			enableWindowOnErrorHandler: true,
-			disableThirdPartyRequests: true,
-		};
-
-		let options: JitsiMeetOptions = {
-			connectionOptions: {},
-			conferenceOptions: {},
-			logLevel: JitsiLogLevels.WARN
+	/**
+	 * Configuration for the public meet.jit.si instance. It only works via BOSH because the WebSockets connections are CORS-restricted. 
+	 */
+	 public static get CONFIG_MEET_JIT_SI(): JitsiMeetOptions {
+		return {
+			logLevel: JitsiLogLevels.WARN,
+			connectionOptions: {
+				roomName: "talentedblocksgetthis",
+				hosts: {
+					domain: "meet.jit.si",
+					muc: "conference.meet.jit.si", // if this is wrong, the connection fails with Strophe: BOSH-Connection failed: improper-addressing
+				},
+				// Can either be a WebSockets (wss://...) or BOSH (.../http-bind) URL. WebSockets are generally preferable, but require the client to run on the same domain
+				// as the host or the host to have cross_domain_websocket enabled (due to CORS). The bosh and websockets properties are deprecated in favor of this format. 
+				get serviceUrl() { return "https://meet.jit.si/http-bind?room="+this.roomName; },
+				deploymentInfo: {}, // Gets rid of an error when Strophe tries to add properties
+			}
 		}
-		// Object.assign(options, userOptions);
+	}
+
+	/**
+	 * Configuration for a docker installation (https://github.com/jitsi/docker-jitsi-meet) running on localhost with default values
+	 */
+	 public static get CONFIG_DOCKER(): JitsiMeetOptions {
+		return {
+			logLevel: JitsiLogLevels.WARN,
+			connectionOptions: {
+				roomName: "talentedblocksgetthis",
+				hosts: {
+					domain: "localhost:8443",
+					muc: "muc.meet.jitsi", // session coordinator. If this is wrong, the connection fails with Strophe: BOSH-Connection failed: improper-addressing
+					anonymousdomain: "meet.jitsi", // internal domain. meet.jitsi by default (docker). used for something something initial connection
+					focus: "focus.meet.jitsi", // video stream coordinator
+				},
+				// Can either be a WebSockets (wss://...) or BOSH (.../http-bind) URL. WebSockets are generally preferable, but require the client to run on the same domain
+				// as the host or the host to have cross_domain_websocket enabled (due to CORS). The properties bosh and websockets are deprecated in favor of this format. 
+				get serviceUrl() { return "https://localhost:8443/http-bind?room="+this.roomName; },
+			}
+		}
+	}
+
+	constructor(
+		options: JitsiMeetOptions
+	) {
+		this.options = options;
 
 		// Initialize
 		JitsiMeetJS.init({});
-		JitsiMeetJS.setLogLevel(options.logLevel);
+		JitsiMeetJS.setLogLevel(this.options.logLevel);
 
 		this.connection = new JitsiMeetJS.JitsiConnection(null, null, this.options.connectionOptions); // app id and token are generally not required
-
-		// this.connectSync();
 	}
 
-	public async connect(): Promise<any> {
+	/**
+	 * 
+	 * @param options Configure the options for the connection. Either as ConnectionOptions or a JitsiMeetJS connection options object. 
+	 * @returns 
+	 */
+	public async connect(options?: JitsiMeetOptions): Promise<any> {
 		return new Promise<any>(((resolve, reject) => {
 			this.connection = new JitsiMeetJS.JitsiConnection(null, null, this.options.connectionOptions);
 

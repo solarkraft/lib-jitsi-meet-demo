@@ -243,12 +243,16 @@ export class JitsiMeet implements Disposable {
 	public async createLocalTracks(options?: CreateLocalTracksOptions): Promise<void> {
 		let tracksOptions = options || this.options.trackOptions || { devices: ['audio', 'video'] };
 
-		return new Promise<void>(async (resolve, reject) => {
+		return new Promise<void>(async (resolve) => {
 			console.debug("Creating local tracks", this.conference)
 			let tracks: JitsiLocalTrack[] = await JitsiMeetJS.createLocalTracks(tracksOptions) as JitsiLocalTrack[];
 			console.debug("Tracks:", tracks);
+		
+			tracks.forEach((track, i) => {
+				console.debug("Adding local track", i, track);
+				this.conference.addTrack(track, i);
+			});
 
-			this.localTracks = tracks;
 			resolve();
 		});
 	}

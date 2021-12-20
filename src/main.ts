@@ -9,16 +9,6 @@ import $ from 'jquery';
 
 import { JitsiMeet } from './JitsiMeet';
 
-function showLocalTracks(jitsiMeet: JitsiMeet) {
-	console.debug("showLocalTracks", "tracks:", jitsiMeet.localTracks);
-
-	jitsiMeet.localTracks.forEach((track, i) => {
-		console.debug("Showing local track", i, track);
-		showTrack(track);
-		jitsiMeet.conference?.addTrack(jitsiMeet.localTracks[i]);
-	});
-}
-
 /**
 * Creates a video/audio element in the UI for a given track
 * @param track JitsiTrack object
@@ -185,9 +175,6 @@ async function main() {
 		[JitsiConferenceEvents.CONFERENCE_JOINED, async () => {
 			// Create local media tracks
 			await jitsiMeet.createLocalTracks();
-
-			// Display the local media tracks
-			showLocalTracks(jitsiMeet);
 
 			updateConferenceDisplay();
 

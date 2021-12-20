@@ -28,6 +28,8 @@ export class JitsiMeet implements Disposable {
 
 	private options: JitsiMeetOptions = {};
 
+	private conferenceEventListeners: Map<JitsiConferenceEvents, Function>;
+
 	/**
 	 * Configuration for the public meet.jit.si instance. It only works via BOSH because the WebSockets connections are CORS-restricted. 
 	 */
@@ -102,17 +104,48 @@ export class JitsiMeet implements Disposable {
 		}));
 	}
 
-	public async joinConference(name: string, listeners: Map<JitsiConferenceEvents, Function>): Promise<any> {
+	/**
+	 * Join a new conference or leave the current conference and join another. 
+	 * Seemingly only one conference is supported per connection by JitsiMeetJS. 
+	 * @param name The name of the conference to join. Can be any string. Example: ParallelPerceptionsDefineReasonably. Automatically transformed to lower case. 
+	 * @param listeners Listeners for events on the conference to add before the conference is joined. If this parameter is not provided, there will be an attempt to use eventListeners from the previous run. 
+	 * @returns true if a new conference was joined, false if the method was aborted due to already being in that conference. 
+	 */
+	public async joinConference(name: string, listeners?: Map<JitsiConferenceEvents, Function>): Promise<any> {
+		console.debug("joinConference");
 		if (name && this.options?.connectionOptions?.roomName) {
 			console.warn(`Room name overridden by options.connectionOptions.roomName (${this.options.connectionOptions.roomName} instead of ${name}). You should only set one. `);
 			name = this.options.connectionOptions.roomName;
 		}
-		return new Promise<any>(((resolve, reject) => {
+		return new Promise<any>(async (resolve, reject) => {
+			// Event listener preservation in case joinConference is called again without the listeners parameter
+			if (listeners) {
+				this.conferenceEventListeners = listeners;
+			} else {
+				listeners = this.conferenceEventListeners;
+			}
+
+			// Already in a conference
+			if (this.conference?.isJoined()) {
+				let currentConference = this.conference.getName();
+				console.info("Already in conference", currentConference);
+
+				if (this.conference?.getName() === name.toLowerCase()) {
+					console.info(`That's the same conference as requested (${name}), doing nothing`);
+					resolve(false);
+					return;
+				} else {
+					console.info(`Leaving ${currentConference} to join ${name}`);
+					this.leaveConference()
+					await this.joinConference(name, listeners);
+					resolve(true);
+					return;
+				}
+			}
 			this.conference = this.connection.initJitsiConference(name.toLowerCase(), {});
 
 			// Success
-			this.conference.addEventListener(JitsiConferenceEvents.CONFERENCE_JOINED, () => this.conferenceJoined());
-			this.conference.addEventListener(JitsiConferenceEvents.CONFERENCE_JOINED, () => resolve(undefined));
+			this.conference.addEventListener(JitsiConferenceEvents.CONFERENCE_JOINED, () => resolve(true));
 
 			// Failure
 			this.conference.on(JitsiConferenceEvents.CONNECTION_INTERRUPTED, (e: JitsiConferenceErrors) => reject(new Error(e)));
@@ -124,25 +157,39 @@ export class JitsiMeet implements Disposable {
 			});
 
 			this.conference.join(null, null);
-		}));
+		});
 	}
 
 	/**
-	* That function is executed when the conference is joined
-	*/
-	private conferenceJoined() {
-		console.debug("onConferenceJoined", this.conference);
+	 * Leave the current conference
+	 * @param listeners Event listeners to add before the conference is left
+	 * @returns true if the conference was left, false if there is no conference to leave
+	 */
+	public async leaveConference(listeners?: Map<JitsiConferenceEvents, Function>): Promise<any> {
+		// TODO: Fix memory leak
+		console.info("leaveConference");
+		return new Promise<any>(async (resolve, reject) => {
+			if (!this.conference?.isJoined()) {
+				console.debug("No conference joined to leave");
+				resolve(false);
+				return;
+			}
 
-		console.info(`Conference ${this.conference.options.name} joined`);
+			this.conference.addEventListener(JitsiConferenceEvents.CONFERENCE_LEFT, () => resolve(true));
 
-		this.localTracks.forEach(track => {
-			this.conference.addTrack(track)
+			// Add provided event listeners
+			listeners?.forEach((listener, event: JitsiConferenceEvents) => {
+				this.conference.addEventListener(event, listener);
+			});
+
+			this.conference.leave();
+			this.conference = null;
 		});
 	}
 
 	public dispose(): void {
-		this.conference.leave();
-		this.connection.disconnect();
+		this.conference?.leave();
+		this.connection?.disconnect();
 
 		this.remoteTracks.forEach(track => {
 			console.debug("Disposing remote track", track)

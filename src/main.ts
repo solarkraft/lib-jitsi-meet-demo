@@ -117,27 +117,32 @@ async function main() {
 		[JitsiConferenceEvents.CONFERENCE_JOINED, () => console.log("... conference joined")],
 
 		// These can also be added using jitsiMeet.conference.addEventListener and removed with jitsiMeet.conference.removeEventListener
-		[JitsiConferenceEvents.USER_JOINED, (usr, user: JitsiParticipant) => console.log(`User ${usr} joined (display name: ${user.getDisplayName()}`, usr),],
+		[JitsiConferenceEvents.USER_JOINED, (usr, user: JitsiParticipant) => console.log(`User ${usr} joined (display name: ${user.getDisplayName()})`),],
 		[JitsiConferenceEvents.USER_LEFT, (usr) => console.log(`User ${usr} left`)],
 		[JitsiConferenceEvents.MESSAGE_RECEIVED, (usr: string, msg) => console.log(`Received message from user ${usr}: ${msg}`)],
 		[JitsiConferenceEvents.KICKED, () => console.log("Kicked :(")],
 
 		[JitsiConferenceEvents.TRACK_ADDED, track => showTrack(track)], // Show a new track that has been added (e.g. on user join)
 		[JitsiConferenceEvents.TRACK_REMOVED, track => removeTrack(track)], // Remove a user's UI elements when they leave
+
+		[JitsiConferenceEvents.CONFERENCE_JOIN_IN_PROGRESS, async () => {
+			// Create local media tracks
+
+			console.log("Creating local tracks")
+			let tracks: JitsiLocalTrack[] = await JitsiMeetJS.createLocalTracks({ devices: ['audio', 'video'] }) as JitsiLocalTrack[];
+
+			// Add them to the jitsi meet object
+			jitsiMeet.localTracks = tracks; // TODO: These tracks are barely used by Jitsi Meet, plus local and remote tracks are often handled together. Might want to unify. 
+
+			// Display the local media tracks
+			showLocalTracks(jitsiMeet);
+		}], // Remove a user's UI elements when they leave
+
 	]);
 
 	await jitsiMeet.joinConference(roomName, conferenceEventListeners);
 
 	// At this point the conference has been joined and the connection is all ready. 
-
-	// Create local media tracks
-	let tracks: JitsiLocalTrack[] = await JitsiMeetJS.createLocalTracks({ devices: ['audio', 'video'] }) as JitsiLocalTrack[];
-
-	// Add them to the jitsi meet object
-	jitsiMeet.localTracks = tracks; // TODO: These tracks are barely used by Jitsi Meet, plus local and remote tracks are often handled together. Might want to unify. 
-
-	// Display the local media tracks
-	showLocalTracks(jitsiMeet);
 
 	// Properly discard the object. May not be strictly necessary (leads to no errors on the other side), but enables us to say goodbye nicely. 
 	$(window).on('beforeunload', () => jitsiMeet.dispose());

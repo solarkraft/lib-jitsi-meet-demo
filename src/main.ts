@@ -88,10 +88,11 @@ function removeTrack(track: JitsiTrack) {
 function setUpUi() {
 	console.info("Adding UI buttons");
 	let actions = new Map<string, Function>([
+		["Leave conference", () => jitsiMeet.leaveConference()],
 		["Join conference TalentedBlocksGetThis", () => jitsiMeet.joinConference('TalentedBlocksGetThis')],
 		["Join conference BrokenEncountersExpandAgo", () => jitsiMeet.joinConference('BrokenEncountersExpandAgo')],
-		["Leave conference", () => jitsiMeet.leaveConference()],
 		["Disconnect", () => jitsiMeet.disconnect()],
+		["Connect", () => jitsiMeet.connect()],
 	]);
 	let controls = document.querySelector("#controls");
 

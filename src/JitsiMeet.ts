@@ -28,6 +28,7 @@ export class JitsiMeet implements Disposable {
 
 	private options: JitsiMeetOptions = {};
 
+	private connectionEventListeners: Map<JitsiConnectionEvents, Function>;
 	private conferenceEventListeners: Map<JitsiConferenceEvents, Function>;
 
 	/**
@@ -88,6 +89,13 @@ export class JitsiMeet implements Disposable {
 	 */
 	public async connect(listeners?: Map<JitsiConnectionEvents, Function>): Promise<string> {
 		return new Promise<string>(((resolve, reject) => {
+			// Event listener preservation in case connect is called again without the listeners parameter
+			if (listeners) {
+				this.connectionEventListeners = listeners;
+			} else {
+				listeners = this.connectionEventListeners;
+			}
+
 			this.connection = new JitsiMeetJS.JitsiConnection(null, null, this.options.connectionOptions);
 
 			// Success

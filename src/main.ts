@@ -51,7 +51,7 @@ function showTrack(track: JitsiTrack) {
 	if (track.getType() === MediaType.AUDIO) {
 		let el = document.createElement("audio") as HTMLAudioElement;
 		el.autoplay = true;
-		el.muted = true;
+		el.muted = false;
 		el.id = participantId + "audio" + idx
 		el.classList.add(userClass);
 		el.classList.add(trackClass);
@@ -93,6 +93,8 @@ function setUpUi() {
 		["Join conference BrokenEncountersExpandAgo", () => jitsiMeet.joinConference('BrokenEncountersExpandAgo')],
 		["Disconnect", () => jitsiMeet.disconnect()],
 		["Connect", () => jitsiMeet.connect()],
+		["Unmute", () => jitsiMeet.conference.getLocalAudioTrack().unmute()],
+		["Mute", () => jitsiMeet.conference.getLocalAudioTrack().mute()],
 	]);
 	let controls = document.querySelector("#controls");
 
@@ -166,6 +168,10 @@ async function main() {
 			showLocalTracks(jitsiMeet);
 
 			updateConferenceDisplay();
+
+			// Intially mute local audio. Can later be done using jitsiMeet.conference.getLocalAudioTrack().mute()
+			let localAudio = jitsiMeet.localTracks.find(t => t.getType() == MediaType.AUDIO);
+			await localAudio?.mute();
 		}],
 
 		[JitsiConferenceEvents.CONFERENCE_LEFT, () => { updateConferenceDisplay() }],

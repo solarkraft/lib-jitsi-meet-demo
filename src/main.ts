@@ -1,19 +1,19 @@
 
-import JitsiMeetJS from '@lyno/lib-jitsi-meet';
-import JitsiParticipant from '@lyno/lib-jitsi-meet/dist/JitsiParticipant';
-import JitsiTrack from '@lyno/lib-jitsi-meet/dist/modules/RTC/JitsiTrack';
-import { MediaType } from '@lyno/lib-jitsi-meet/dist/service/RTC/MediaType';
-import { JitsiConnectionEvents } from '@lyno/lib-jitsi-meet/dist/JitsiConnectionEvents';
-import { JitsiConferenceEvents } from '@lyno/lib-jitsi-meet/dist/JitsiConferenceEvents';
+import JitsiMeetJS from '@solyd/lib-jitsi-meet/dist/esm';
+import JitsiParticipant from '@solyd/lib-jitsi-meet/dist/esm';
+import JitsiTrack from '@solyd/lib-jitsi-meet/dist/esm';
+import MediaType from '@solyd/lib-jitsi-meet/dist/esm';
+import { JitsiConnectionEvents } from '@solyd/lib-jitsi-meet/dist/esm/JitsiConnectionEvents';
+import { JitsiConferenceEvents } from '@solyd/lib-jitsi-meet/dist/esm/JitsiConferenceEvents';
 import $ from 'jquery';
 
 import { JitsiMeet } from './JitsiMeet';
-import JitsiLocalTrack from '@lyno/lib-jitsi-meet/dist/modules/RTC/JitsiLocalTrack';
+import JitsiLocalTrack from '@solyd/lib-jitsi-meet/dist/esm/modules/RTC/JitsiLocalTrack';
 
 /** Creates a video/audio element in the UI for a given track
 *   @param track JitsiTrack object
 */
-function showTrack(track: JitsiTrack) {
+function showTrack(track: typeof JitsiTrack) {
 	console.debug("showTrack", track);
 
 	let userClass: string = "local"

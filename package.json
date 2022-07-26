@@ -10,7 +10,7 @@
 		"build": "npx webpack"
 	},
 	"dependencies": {
-		"@lyno/lib-jitsi-meet": "^2.6726.2",
+		"@solyd/lib-jitsi-meet": "^2.7001.1",
 		"@typed/disposable": "^3.4.1",
 		"jquery": "^3.6.0",
 		"ts-loader": "^9.3.1"

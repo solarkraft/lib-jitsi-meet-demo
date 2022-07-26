@@ -1,16 +1,16 @@
-import JitsiMeetJS from '@lyno/lib-jitsi-meet';
-import { CreateLocalTracksOptions, InitOptions } from "@lyno/lib-jitsi-meet/";
-import { JitsiConferenceEvents } from "@lyno/lib-jitsi-meet/dist/JitsiConferenceEvents";
-import { JitsiConferenceOptions } from "@lyno/lib-jitsi-meet/dist/JitsiConnection";
-import { JitsiLogLevels } from "@lyno/lib-jitsi-meet/dist/JitsiLogLevels";
-import JitsiRemoteTrack from '@lyno/lib-jitsi-meet/dist/modules/RTC/JitsiRemoteTrack';
-import JitsiLocalTrack from '@lyno/lib-jitsi-meet/dist/modules/RTC/JitsiLocalTrack';
-import JitsiConference from "@lyno/lib-jitsi-meet/JitsiConference";
-import JitsiConnection from "@lyno/lib-jitsi-meet/JitsiConnection";
+import JitsiMeetJS from '@solyd/lib-jitsi-meet/dist/esm';
+import { CreateLocalTracksOptions, InitOptions } from "@solyd/lib-jitsi-meet/dist/esm";
+import { JitsiConferenceEvents } from "@solyd/lib-jitsi-meet/dist/esm/JitsiConferenceEvents";
+import { JitsiConferenceOptions } from "@solyd/lib-jitsi-meet/dist/esm/JitsiConnection";
+import { JitsiLogLevels } from "@solyd/lib-jitsi-meet/dist/esm/JitsiLogLevels";
+import JitsiRemoteTrack from '@solyd/lib-jitsi-meet/dist/esm/modules/RTC/JitsiRemoteTrack';
+import JitsiLocalTrack from '@solyd/lib-jitsi-meet/dist/esm/modules/RTC/JitsiLocalTrack';
+import JitsiConference from "@solyd/lib-jitsi-meet/dist/esm/JitsiConference";
+import JitsiConnection from "@solyd/lib-jitsi-meet/dist/esm/JitsiConnection";
 import { Disposable } from "@typed/disposable";
-import { JitsiConnectionEvents } from '@lyno/lib-jitsi-meet/dist/JitsiConnectionEvents';
-import { JitsiConnectionErrors } from '@lyno/lib-jitsi-meet/dist/JitsiConnectionErrors';
-import { JitsiConferenceErrors } from '@lyno/lib-jitsi-meet/dist/JitsiConferenceErrors';
+import { JitsiConnectionEvents } from '@solyd/lib-jitsi-meet/dist/esm/JitsiConnectionEvents';
+import { JitsiConnectionErrors } from '@solyd/lib-jitsi-meet/dist/esm/JitsiConnectionErrors';
+import { JitsiConferenceErrors } from '@solyd/lib-jitsi-meet/dist/esm';
 
 export interface ConnectionOptions {
 	/** The main address of your server. Can either be a WebSockets (wss://.../xmpp-websocket) or BOSH (.../http-bind) URL. 
@@ -53,7 +53,7 @@ export interface JitsiMeetOptions {
 }
 
 export class JitsiMeet implements Disposable {
-	public connection: JitsiConnection;
+	public connection: JitsiConnection | any;
 	public conference: JitsiConference;
 
 	public localTracks: JitsiLocalTrack[] = [];
@@ -203,6 +203,7 @@ export class JitsiMeet implements Disposable {
 
 			// Add provided event listeners
 			listeners?.forEach((listener, event: JitsiConferenceEvents) => {
+				// @ts-ignore TS2345: Argument of type 'Function' is not assignable to parameter of type '(...args: any[]) => unknown'
 				this.conference.addEventListener(event, listener);
 			});
 
@@ -245,12 +246,12 @@ export class JitsiMeet implements Disposable {
 
 		return new Promise<void>(async (resolve) => {
 			console.debug("Creating local tracks", this.conference)
-			let tracks: JitsiLocalTrack[] = await JitsiMeetJS.createLocalTracks(tracksOptions) as JitsiLocalTrack[];
+			let tracks: JitsiLocalTrack[] = await JitsiMeetJS.createLocalTracks(tracksOptions) as unknown as JitsiLocalTrack[]; // createLocalTracks can also return JitsiConferenceErrors
 			console.debug("Tracks:", tracks);
 		
 			tracks.forEach((track, i) => {
 				console.debug("Adding local track", i, track);
-				this.conference.addTrack(track, i);
+				this.conference.addTrack(track);
 			});
 
 			resolve();

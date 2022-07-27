@@ -136,7 +136,7 @@ async function main() {
 	let roomName = "TalentedBlocksGetThis";
 
 	let config = JitsiMeet.CONFIG_MEET_JIT_SI;
-	// Because the public Jitsi Meet instance does extra routing on connection based on the room name, it needs to be supplied earlier than ususal.
+	// Because the public Jitsi Meet instance requires the room name to be included in the serviceUrl it needs to be supplied earlier than ususal.
 	config.connectionOptions.roomName = roomName; // This property overrides the room name used on joinConference(). Setting both produces a warning. 
 
 	// let config = JitsiMeet.CONFIG_DOCKER;

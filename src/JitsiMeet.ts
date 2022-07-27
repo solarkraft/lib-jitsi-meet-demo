@@ -14,16 +14,16 @@ import { JitsiConferenceErrors } from '@solyd/lib-jitsi-meet/dist/esm';
 
 export interface ConnectionOptions {
 	/** The main address of your server. Can either be a WebSockets (wss://.../xmpp-websocket) or BOSH (.../http-bind) URL. 
-	 *  WebSocket is generally preferable. The properties `bosh` and `websocket` are deprecated in favor of this one. 
+	 *  WebSocket is generally preferable. The properties `bosh` and `websocket` are deprecated in favor of `serviceUrl`. 
 	 *  The server needs to be configured to allow CORS with the domain your app runs on. The meet.jit.si instance has it enabled
-	 *  for BOSH, on a docker instance you can enable it by setting the environment variable `XMPP_CROSS_DOMAIN=true`. */
+	 *  for BOSH, on a docker instance you can enable it by setting the environment variable `XMPP_CROSS_DOMAIN=true` (see `.env`). */
 	serviceUrl?: string,
 	hosts: {
-		/** Base domain. Only necessary on the public instance. Causes focus errors if set wrongly. */
+		/** Base domain. Only required on the public instance. Causes focus errors if set wrongly. */
 		domain?: string,
 		/** Internal domain of the "Multi user chat" (XMPP room/Session coordination). If this is wrong, the connection fails 
-		 *  silently when using the WebSocket or with Strophe: BOSH-Connection failed: improper-addressing
-		 *  when using BOSH. Default: muc.meet.jitsi (docker) or conference.meet.jit.si (official instance).
+		 *  silently when using the WebSocket or with `Strophe: BOSH-Connection failed: improper-addressing`
+		 *  when using BOSH. Defaults: `muc.meet.jitsi` (docker) or `conference.meet.jit.si` (official instance).
 		 *  Does not need to be publicly accessible. */
 		muc?: string,
 		/** Internal base domain. Likely used to infer others. Default (docker): meet.jitsi (undefined on public instance) */
@@ -35,9 +35,10 @@ export interface ConnectionOptions {
 	/** Can be used to change the `serviceUrl` when it is a get only property (meet.jit.si config).
 	 *  `room?=... query parameter` is automatically appendend. */
 	baseServiceUrl?: string,
-	/** If your Jitsi Meet instance does additional routing of users based on the requested room
-	 *  name passed in the serviceUrl `?room=...` query parameter, you may need to specify the room
-	 *  name on connection. So far this behavior has only been seen on the public meet.jit.si instance. */
+	/** If your Jitsi Meet instance does additional routing of users (load halancing) based on the requested room
+	 *  name passed in the serviceUrl `?room=...` query parameter (meet.jit.si), you need to specify the room
+	 *  name here before connecting. If there is a mismatch, you get a nice secret room only those 
+	 *  in the know will be able to connect to.  */
 	roomName?: string;
 	/** May be necessary to prevent a type error when it is attempted to be modified. Only seen used on meet.jit.si */
 	deploymentInfo?: {}
@@ -71,14 +72,14 @@ export class JitsiMeet implements Disposable {
 		return {
 			logLevel: JitsiLogLevels.WARN,
 			connectionOptions: {
-				// The public Jitsi Meet instance seems to do extra routing on connection based on the room name, hence it must be provided before connecting. 
 				roomName: "",
 				hosts: {
 					domain: "meet.jit.si",
 					muc: "conference.meet.jit.si",
 				},
-				baseServiceUrl: "https://meet.jit.si/http-bind?room=",
-				get serviceUrl() { return this.baseServiceUrl + this.roomName.toLowerCase(); },
+				// The public Jitsi Meet instance seems to do extra routing on connection based on the room name, 
+				// hence it must be provided before connecting and the room can't be switched later.  
+				get serviceUrl() { return "https://meet.jit.si/http-bind?room=" + this.roomName.toLowerCase(); },
 				deploymentInfo: {}, // Gets rid of an error when Strophe tries to add properties (only seen on meet.jit.si)
 			}
 		}
@@ -91,8 +92,8 @@ export class JitsiMeet implements Disposable {
 		return {
 			logLevel: JitsiLogLevels.WARN,
 			connectionOptions: {
-				// serviceUrl: "https://localhost:8443/http-bind",
-				serviceUrl: "wss://localhost:8443/xmpp-websocket",
+				// serviceUrl: "https://localhost:8443/http-bind", // BOSH
+				serviceUrl: "wss://localhost:8443/xmpp-websocket", // WebSocket
 				hosts: {
 					anonymousdomain: "meet.jitsi", // Internal domain. meet.jitsi by default (docker). may be used to infer others. 
 					muc: "muc.meet.jitsi", // Session coordinator. If this is wrong, the connection fails with Strophe: BOSH-Connection failed: improper-addressing

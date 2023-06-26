@@ -1,4 +1,3 @@
-import JitsiMeetJS from '@solyd/lib-jitsi-meet/dist/esm';
 import { CreateLocalTracksOptions, InitOptions } from "@solyd/lib-jitsi-meet/dist/esm";
 import { JitsiConferenceEvents } from "@solyd/lib-jitsi-meet/dist/esm/JitsiConferenceEvents";
 import { JitsiConferenceOptions } from "@solyd/lib-jitsi-meet/dist/esm/JitsiConnection";
@@ -11,6 +10,10 @@ import { Disposable } from "@typed/disposable";
 import { JitsiConnectionEvents } from '@solyd/lib-jitsi-meet/dist/esm/JitsiConnectionEvents';
 import { JitsiConnectionErrors } from '@solyd/lib-jitsi-meet/dist/esm/JitsiConnectionErrors';
 import { JitsiConferenceErrors } from '@solyd/lib-jitsi-meet/dist/esm';
+import { JitsiMeetJSType } from "@solyd/lib-jitsi-meet";
+
+// @ts-expect-error imported through script in index.html. This is hacky and bad. // Todo
+const JitsiMeetJS: JitsiMeetJSType = window.JitsiMeetJS
 
 export interface ConnectionOptions {
 	/** The main address of your server. Can either be a WebSockets (wss://.../xmpp-websocket) or BOSH (.../http-bind) URL. 

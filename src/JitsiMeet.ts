@@ -12,6 +12,11 @@ import { JitsiConnectionEvents } from '@solyd/lib-jitsi-meet/dist/esm/JitsiConne
 import { JitsiConnectionErrors } from '@solyd/lib-jitsi-meet/dist/esm/JitsiConnectionErrors';
 import { JitsiConferenceErrors } from '@solyd/lib-jitsi-meet/dist/esm';
 
+// Fix for Uncaught Error: Missing strophe-plugins (disco plugin is required)!
+// The plugin's default import is compiled in a way that doesn't work with Vite, but including the source works!
+// The code needs to run once to register a connectionPluigin with Strophe, which is later needed in the xmpp connection handling.
+import "strophejs-plugin-disco/src/strophe.disco"
+
 export interface ConnectionOptions {
 	/** The main address of your server. Can either be a WebSockets (wss://.../xmpp-websocket) or BOSH (.../http-bind) URL. 
 	 *  WebSocket is generally preferable. The properties `bosh` and `websocket` are deprecated in favor of `serviceUrl`. 
